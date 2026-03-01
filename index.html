@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chess.Tour.7B | Tournament Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-body: #0a0a0a; --bg-card: #141414; --chess-green: #5c934a; --chess-green-bright: #7ac463;
+            --text-main: #ffffff; --text-sub: #a0a0a0; --border: #222;
+        }
+        [data-theme="light"] {
+            --bg-body: #f0f0f0; --bg-card: #ffffff; --chess-green: #4a7a3b; --chess-green-bright: #5c934a;
+            --text-main: #121212; --text-sub: #666666; --border: #ccc;
+        }
+
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-body); color: var(--text-main); transition: 0.3s; overflow-x: hidden; }
+        .view { min-height: 100vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; position: relative; }
+        .hidden { display: none !important; }
+
+        /* Animations */
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
+        
+        .card { 
+            background: var(--bg-card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; position: relative; 
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        /* Buttons & Inputs */
+        .btn-main { background: var(--chess-green); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1rem; }
+        .btn-main:hover { transform: translateY(-2px); background: var(--chess-green-bright); box-shadow: 0 4px 15px rgba(92, 147, 74, 0.4); }
+        .btn-loading { pointer-events: none; opacity: 0.7; }
+        .btn-danger { background: #d9534f; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; transition: 0.2s; }
+        .btn-danger:hover { background: #c9302c; }
+        
+        .input-field { background: #1a1a1a; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; transition: 0.2s; font-size: 16px; }
+        [data-theme="light"] .input-field { background: #f5f5f5; color: #121212; }
+        .input-field:focus { border-color: var(--chess-green); outline: none; box-shadow: 0 0 10px rgba(92,147,74,0.2); }
+
+        /* Language Select In Header */
+        .lang-select { background: #000; color: var(--text-main); border: 1px solid var(--border); padding: 5px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; cursor: pointer; outline: none; }
+
+        /* Login Screen Fun Styles */
+        #login-page { justify-content: center; align-items: center; overflow: hidden; }
+        .bg-pieces { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.05; pointer-events: none; }
+        .bg-pieces i { position: absolute; color: var(--chess-green); animation: float 6s ease-in-out infinite; }
+        .p1 { top: 10%; left: 10%; font-size: 10rem; animation-delay: 0s; }
+        .p2 { bottom: 15%; right: 10%; font-size: 14rem; animation-delay: 2s; }
+        .p3 { top: 30%; right: 20%; font-size: 8rem; animation-delay: 1s; }
+        .p4 { bottom: 20%; left: 20%; font-size: 12rem; animation-delay: 3s; }
+        
+        .login-box {
+            background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1);
+            padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 10; box-sizing: border-box;
+        }
+
+        /* Leaderboard & Inline Buttons */
+        .inline-inc-btn { background: rgba(92, 147, 74, 0.2); color: var(--chess-green-bright); border: 1px solid var(--chess-green); padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: 0.2s; margin-left: 2px;}
+        .inline-inc-btn:hover { background: var(--chess-green); color: white; transform: scale(1.1); }
+        .lb-tabs { display: flex; gap: 5px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 8px; }
+        .lb-tab { flex: 1; border: none; background: none; color: var(--text-sub); padding: 8px; cursor: pointer; border-radius: 5px; font-size: 0.8rem; transition: 0.3s; font-weight: bold; }
+        .lb-tab.active { background: var(--chess-green); color: white; }
+
+        .dashboard-container { display: flex; flex-wrap: wrap; gap: 20px; max-width: 100%; margin: 0 auto; width: 100%; }
+        .dashboard-item { flex: 1; min-width: 350px; max-width: calc(50% - 10px); }
+        @media (max-width: 1400px) { .dashboard-item { max-width: calc(50% - 10px); } }
+        @media (max-width: 900px) { .dashboard-item { max-width: 100%; min-width: 100%; } }
+
+        .item-row { background: #1a1a1a; padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; border-left: 3px solid transparent; word-break: break-all;}
+        .item-row:hover { border-left-color: var(--chess-green); background: #222; }
+        .item-row.is-you { border-left-color: var(--chess-green-bright); background: rgba(92, 147, 74, 0.1); }
+        
+        .admin-section { border: 1px dashed var(--chess-green); padding: 15px; border-radius: 10px; margin-top: 15px; background: rgba(92, 147, 74, 0.03); }
+        .user-list-item { border-bottom: 1px solid var(--border); padding: 10px 0; display: flex; flex-direction: column; gap: 5px; }
+        
+        .role-badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 5px; font-weight: bold; letter-spacing: 0.5px; }
+        .badge-admin { background: #d9534f; color: white; box-shadow: 0 0 5px #d9534f; }
+        .badge-host { background: #f0ad4e; color: #000; }
+        .badge-participant { background: #5bc0de; color: #000; }
+        .badge-owner { background: #9b59b6; color: white; box-shadow: 0 0 5px #9b59b6; }
+
+        /* Floating Chat Bubble & Chat Window */
+        .chat-fab { position: fixed; bottom: 30px; right: 30px; background: var(--chess-green); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.4); transition: 0.3s; z-index: 100; }
+        .chat-fab:hover { transform: scale(1.1) rotate(10deg); }
+        .chat-window { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 450px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 15px; box-shadow: 0 15px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; z-index: 99; transition: 0.3s; opacity: 0; pointer-events: none; transform: translateY(20px); }
+        .chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+        .chat-header { background: #000; padding: 15px; border-radius: 15px 15px 0 0; font-weight: bold; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;}
+        .chat-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-input-area { padding: 10px; background: #000; border-radius: 0 0 15px 15px; display: flex; gap: 10px; }
+        
+        .chat-msg { background: #1a1a1a; padding: 10px; border-radius: 10px; position: relative; font-size: 0.9rem; word-break: break-word;}
+        .chat-msg .author { font-weight: bold; color: var(--chess-green); font-size: 0.75rem; margin-bottom: 3px; display: flex; align-items: center; gap: 5px;}
+        
+        .chat-msg.admin-msg { background: rgba(217, 83, 79, 0.1); border: 1px solid #d9534f; }
+        .chat-msg.admin-msg .author { color: #d9534f; }
+        .chat-msg.admin-msg .text-body { font-weight: bold; color: #fff; }
+        
+        .delete-msg-btn { position: absolute; top: 10px; right: 10px; color: #666; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
+        .delete-msg-btn:hover { color: #d9534f; }
+        
+        /* Mobile Adjustments */
+        @media (max-width: 1000px) { 
+            .dashboard-item { max-width: 100%; min-width: 100%; }
+            .chat-window { bottom: 0; right: 0; width: 100%; height: 100vh; border-radius: 0; position: fixed; z-index: 1000; } 
+            .chat-fab { bottom: 20px; right: 20px; z-index: 1001; }
+            .chat-header { border-radius: 0; padding: 20px; }
+            .chat-input-area { border-radius: 0; padding: 15px; padding-bottom: 30px; }
+        }
+
+        /* Minecraft Command Bar */
+        #mc-command-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.9);
+            border-top: 2px solid #555; padding: 10px 20px; box-sizing: border-box; z-index: 1000;
+            display: none; align-items: center; gap: 10px; font-family: 'Courier New', monospace;
+        }
+        #mc-command-bar span { color: #aaa; font-weight: bold; font-size: 1.2rem; }
+        #mc-input { background: transparent; border: none; color: white; outline: none; width: 100%; font-size: 1.1rem; }
+
+        /* Minecraft Success/Error Popup */
+        .mc-message { 
+            position: fixed; top: 20%; left: 50%; transform: translateX(-50%); 
+            background: rgba(0,0,0,0.9); border: 2px solid #5c934a; padding: 20px; 
+            border-radius: 10px; color: white; z-index: 2000; display: none; 
+            text-align: center; font-family: 'Courier New', monospace; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <section id="login-page" class="view">
+        <div class="bg-pieces">
+            <i class="fa-solid fa-chess-knight p1"></i>
+            <i class="fa-solid fa-chess-rook p2"></i>
+            <i class="fa-solid fa-chess-bishop p3"></i>
+            <i class="fa-solid fa-chess-pawn p4"></i>
+        </div>
+        <div class="login-box">
+            <h1 style="font-size: clamp(2.5rem, 8vw, 3rem); margin: 0 0 5px 0; font-weight: 800; letter-spacing: -1px;">Tour.<span style="color:var(--chess-green)">7B</span></h1>
+            <p data-i18n="loginSub" style="color: var(--text-sub); margin-bottom: 30px; font-size: 0.9rem;">Ready your opening move.</p>
+            <input type="text" id="login-user" class="input-field" data-i18n-ph="userPlaceholder" placeholder="Username">
+            <input type="password" id="login-pass" class="input-field" data-i18n-ph="passPlaceholder" placeholder="Password">
+            <button class="btn-main" style="width: 100%; margin-top: 20px; padding: 15px; font-size: 1.1rem;" id="doLogin">
+                <span data-i18n="enterArena">Enter Arena</span> <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </section>
+
+    <section id="dashboard-page" class="view hidden">
+        <header style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0 30px 0; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-moon" id="theme-toggle" style="cursor:pointer; font-size: 1.3rem; color: var(--chess-green);"></i>
+                <select id="lang-selector" class="lang-select">
+                    <option value="en">🇬🇧 EN</option>
+                    <option value="de">🇩🇪 DE</option>
+                    <option value="fr">🇫🇷 FR</option>
+                    <option value="ar">🇸🇦 AR</option>
+                </select>
+                <button onclick="window.doLogout()" style="background:none; border:1px solid #444; color:var(--text-sub); cursor:pointer; padding: 6px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: bold;">LOGOUT</button>
+            </div>
+            <h2 style="font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; margin:0;">Tour.<span style="color:var(--chess-green)">7B</span></h2>
+            <div id="user-display" style="font-weight:bold; font-size: 0.85rem;">Connecting...</div>
+        </header>
+
+        <main class="dashboard-container" id="dashboard-container">
+            <!-- Riddle Card -->
+            <div class="dashboard-item" data-card-id="riddle">
+                <div class="card">
+                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                    <h3><i class="fa-solid fa-puzzle-piece" style="color:var(--chess-green)"></i> <span data-i18n="todayRiddle">Today's Riddle</span></h3>
+                    <div id="riddle-view">
+                        <img id="riddle-img" src="" style="width:100%; border-radius:8px; display:none; margin-bottom: 15px;">
+                        <p id="riddle-text" style="color: var(--text-sub); line-height: 1.5;">Awaiting the first puzzle...</p>
+                    </div>
+                    <div class="role-admin hidden admin-section">
+                        <input type="text" id="edit-riddle-text" class="input-field" placeholder="Description">
+                        <input type="text" id="edit-riddle-url" class="input-field" placeholder="Image URL">
+                        <button class="btn-main" id="saveRiddle" style="width:100%; margin-top: 10px;">Update Riddle</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Card -->
+            <div class="dashboard-item" data-card-id="settings">
+                <div class="card">
+                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                    <h3><i class="fa-solid fa-gear" style="color:var(--chess-green)"></i> <span data-i18n="settingsTitle">Settings</span></h3>
+                    <input type="password" id="change-pass-input" class="input-field" placeholder="New Password (6+ chars)">
+                    <button class="btn-main" id="doChangePass" style="width:100%; margin-top:10px;" data-i18n="updatePass">Update Password</button>
+                </div>
+            </div>
+
+            <!-- Support Ticket Card -->
+            <div class="dashboard-item role-not-owner hidden" data-card-id="support">
+                <div class="card">
+                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                    <h3><i class="fa-solid fa-paper-plane" style="color:var(--chess-green)"></i> Contact Owner</h3>
+                    <textarea id="support-input" class="input-field" placeholder="Send a ticket to the main account..." rows="3"></textarea>
+                    <button class="btn-main" id="sendSupport" style="width:100%" data-i18n="submitTicket">Send Ticket</button>
+                </div>
+            </div>
+
+            <!-- Leaderboard Card -->
+            <div class="dashboard-item" data-card-id="leaderboard">
+                <div class="card" style="min-height: 600px;">
+                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                    <h3><i class="fa-solid fa-trophy" style="color: gold;"></i> <span data-i18n="leaderboard">Leaderboard</span></h3>
+                    <div class="lb-tabs">
+                        <button class="lb-tab active" id="tab-chess" data-i18n="chess">Chess</button>
+                        <button class="lb-tab" id="tab-tricks" data-i18n="tricks">Tricks</button>
+                        <button class="lb-tab" id="tab-global" data-i18n="global">Global</button>
+                    </div>
+                    <div id="lb-display"></div>
+                    
+                    <div class="role-admin hidden admin-section">
+                        <h4>Point Override</h4>
+                        <input type="text" id="lb-name" class="input-field" placeholder="Exact Player Name">
+                        <div style="display:flex; gap:5px;">
+                            <input type="number" id="lb-chess" class="input-field" placeholder="Set Chess Pts">
+                            <input type="number" id="lb-trick" class="input-field" placeholder="Set Trick Pts">
+                        </div>
+                        <button class="btn-main" id="updateLB" style="width:100%; margin-top: 5px;">Force Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Owner Inbox Card -->
+            <div class="dashboard-item role-owner hidden" data-card-id="inbox">
+                <div class="card">
+                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                    <h3><i class="fa-solid fa-inbox" style="color:var(--chess-green)"></i> Owner Inbox</h3>
+                    <div id="inbox-container" style="max-height: 300px; overflow-y: auto; padding-right: 5px;"></div>
+                </div>
+            </div>
+
+            <!-- User Management Card -->
+            <div class="dashboard-item role-admin hidden" data-card-id="usermgmt">
+                <div class="card">
+                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                    <h3><i class="fa-solid fa-users-gear" style="color:var(--chess-green)"></i> <span data-i18n="userMgmt">User Management</span></h3>
+                    <p style="font-size:0.8rem; color:var(--text-sub); margin-top:6px;">Manage roles and request password resets.</p>
+                    <div id="admin-user-list" style="margin-top:12px; max-height: 300px; overflow-y:auto; padding-right:5px;"></div>
+                    
+                    <div class="admin-section" style="margin-top: 15px;">
+                        <h4>Create Account</h4>
+                        <input type="text" id="new-name" class="input-field" placeholder="New Username">
+                        <input type="password" id="new-pass" class="input-field" placeholder="Password">
+                        <button class="btn-main" id="createUser" style="width:100%; margin-top: 10px;">Register User</button>
+                    </div>
+                    
+                    <div class="admin-section" style="margin-top: 15px;">
+                        <h4>Link Account to Leaderboard</h4>
+                        <input type="text" id="link-user" class="input-field" placeholder="Auth Username">
+                        <input type="text" id="link-lb" class="input-field" placeholder="Leaderboard Name">
+                        <button class="btn-main" id="doLink" style="width:100%; margin-top: 10px;">Link Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Command Codes Card -->
+            <div class="dashboard-item role-admin hidden" data-card-id="codes">
+                <div class="card">
+                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                    <h3><i class="fa-solid fa-code" style="color:var(--chess-green)"></i> Command Codes</h3>
+                    <div id="codes-list" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;"></div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                        <input type="text" id="code-str" class="input-field" placeholder="Code (e.g. 1234)">
+                        <input type="number" id="code-pts" class="input-field" placeholder="Trick Points Amount">
+                        <input type="text" id="code-msg" class="input-field" placeholder="Custom Success Message">
+                        <button class="btn-main" id="createCode" style="width:100%; margin-top: 5px;">Create Code</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <div id="mc-message-popup" class="mc-message"></div>
+
+    <div id="mc-command-bar">
+        <span>/</span>
+        <input type="text" id="mc-input" placeholder="Enter command code...">
+    </div>
+
+    <div class="chat-fab" id="chatToggleBtn"><i class="fa-solid fa-comments"></i></div>
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-header">
+            <span>Live Chat</span>
+            <button class="btn-main role-host-up hidden" id="sendEmphasis" style="background: #f39c12; padding: 6px 12px; font-size: 0.8rem;" title="5m Cooldown">
+                <i class="fa-solid fa-bullhorn"></i>
+            </button>
+            <i class="fa-solid fa-xmark" style="cursor:pointer; font-size: 1.2rem; padding: 5px;" id="chatCloseBtn"></i>
+        </div>
+        <div class="chat-body" id="chat-container"></div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" class="input-field" placeholder="Say something..." style="margin:0;">
+            <button class="btn-main" id="sendChat" style="padding: 0 15px;"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy, getDoc, updateDoc, increment, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyClXt0-r-6bSpGEmzLLYpiAszGiW20GLkM",
+            projectId: "b-tournament",
+            storageBucket: "b-tournament.firebasestorage.app",
+            messagingSenderId: "785284063880",
+            appId: "1:785284063880:web:f078c8325b28926162f53d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUserData = null;
+        let lbRawData = [];
+        let currentLBMode = 'chess';
+        let listenersActive = false;
+        let draggedElement = null;
+
+        // Shared Firestore listener error handler to avoid uncaught errors
+        const handleFSListenerError = (error, ctx = 'Firestore') => {
+            console.warn(`${ctx} error:`, error && error.message ? error.message : error);
+            if (error && error.code === 'permission-denied') {
+                try { showMCMessage("Firestore: Missing permissions. Sign in with proper account."); } catch(e) {}
+            }
+            listenersActive = false;
+        };
+
+        // --- DRAG & DROP DASHBOARD ---
+        function initDragAndDrop() {
+            const container = document.getElementById('dashboard-container');
+            if (!container) return;
+
+            const items = container.querySelectorAll('.dashboard-item');
+            items.forEach(item => {
+                const handle = item.querySelector('.card-drag-handle');
+                if (!handle) return;
+
+                handle.addEventListener('dragstart', (e) => {
+                    draggedElement = item;
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                handle.addEventListener('dragend', () => {
+                    if (draggedElement) draggedElement.classList.remove('dragging');
+                    saveDashboardOrder();
+                });
+
+                handle.draggable = true;
+            });
+
+            items.forEach(item => {
+                item.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (draggedElement && draggedElement !== item) {
+                        item.parentNode.insertBefore(draggedElement, item);
+                    }
+                });
+            });
+        }
+
+        function saveDashboardOrder() {
+            const order = Array.from(document.querySelectorAll('.dashboard-item')).map(item => item.dataset.cardId);
+            localStorage.setItem('dashboardOrder', JSON.stringify(order));
+        }
+
+        function loadDashboardOrder() {
+            const saved = localStorage.getItem('dashboardOrder');
+            if (!saved) return;
+            const order = JSON.parse(saved);
+            const container = document.getElementById('dashboard-container');
+            const current = Array.from(container.querySelectorAll('.dashboard-item')).map(el => ({ id: el.dataset.cardId, el }));
+            const sorted = order.map(id => current.find(c => c.id === id)).filter(c => c).map(c => c.el);
+            sorted.forEach(el => container.appendChild(el));
+        }
+
+        // --- HELPER: Setup all data listeners ---
+        const setupAllListeners = () => {
+            if (listenersActive) return; // Prevent duplicate listeners
+            listenersActive = true;
+            // If listener setup fails immediately, ensure we reset state via error handlers below.
+
+            onSnapshot(collection(db, "leaderboard"), (snap) => {
+                lbRawData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (typeof renderLB === 'function') renderLB();
+            }, (error) => handleFSListenerError(error, 'Leaderboard'));
+
+            onSnapshot(doc(db, "content", "riddle"), (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    const data = docSnapshot.data();
+                    const riddleText = document.getElementById('riddle-text');
+                    if (riddleText) riddleText.innerText = data.text || "No description provided.";
+                    const img = document.getElementById('riddle-img');
+                    if (img) {
+                        if (data.url) {
+                            img.src = data.url;
+                            img.style.display = 'block';
+                        } else {
+                            img.style.display = 'none';
+                        }
+                    }
+                    // Pre-fill edit fields
+                    const editText = document.getElementById('edit-riddle-text');
+                    const editUrl = document.getElementById('edit-riddle-url');
+                    if (editText) editText.value = data.text || '';
+                    if (editUrl) editUrl.value = data.url || '';
+                }
+            }, (error) => handleFSListenerError(error, 'Riddle'));
+
+            onSnapshot(query(collection(db, "chat"), orderBy("time", "asc")), (snap) => {
+                const c = document.getElementById('chat-container');
+                if (!c) return;
+                c.innerHTML = "";
+                snap.forEach(d => {
+                    const data = d.data();
+                    const isOwn = currentUserData && (currentUserData.username === data.author);
+                    const isStaffMsg = ['owner', 'admin', 'host'].includes(data.role);
+                    const canDelete = (currentUserData && ['owner', 'admin'].includes(currentUserData.role)) || (currentUserData && currentUserData.role === 'host' && isOwn);
+                    const msgClass = isStaffMsg ? 'chat-msg admin-msg' : 'chat-msg';
+                    const badge = isStaffMsg ? `<span class="role-badge badge-${data.role}">${data.role.toUpperCase()}</span>` : '';
+                    const emphasis = data.isEmphasis ? ' style="background: rgba(243, 156, 18, 0.2); border: 1px solid #f39c12; font-weight: bold;"' : '';
+                    c.innerHTML += `<div class="${msgClass}"${emphasis}><div class="author">${data.author} ${badge}</div><div>${data.text}</div>${canDelete ? `<i class="fa-solid fa-trash delete-msg-btn" onclick="window.deleteMsg('${d.id}')"></i>` : ''}</div>`;
+                });
+                c.scrollTop = c.scrollHeight;
+            }, (error) => handleFSListenerError(error, 'Chat'));
+
+            onSnapshot(collection(db, "players"), (snap) => {
+                const list = document.getElementById('admin-user-list');
+                if (!list) return;
+                list.innerHTML = '';
+                snap.docs.forEach(d => {
+                    const user = d.data();
+                    const username = user.username || d.id;
+                    const role = user.role || 'participant';
+                    const div = document.createElement('div');
+                    div.className = 'user-list-item';
+                    div.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.9rem;"><b>${username}</b> <small>(${role})</small></span>
+                            <div style="display:flex; gap:5px;">
+                                <select onchange="window.changeRole('${d.id}', this.value)" style="background:#1a1a1a; border:1px solid #333; color:white; padding:4px; border-radius:4px; cursor:pointer; font-size:0.7rem;">
+                                    <option value="${role}">${role}</option>
+                                    <option value="participant">participant</option>
+                                    <option value="host">host</option>
+                                    <option value="admin">admin</option>
+                                </select>
+                                <button onclick="window.resetPass('${d.id}')" style="background:#d9534f; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">RESET</button>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }, (error) => handleFSListenerError(error, 'UserMgmt'));
+
+            onSnapshot(query(collection(db, "messages"), orderBy("time", "desc")), (snap) => {
+                const container = document.getElementById('inbox-container');
+                if (!container) return;
+                container.innerHTML = snap.docs.map(d => `<div style="background:#1a1a1a; padding:10px; margin-bottom:5px; border-radius:8px; border-left:3px solid #9b59b6; display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="flex:1;"><b>${d.data().from}:</b> ${d.data().text}</div>
+                    <button onclick="window.delInbox('${d.id}')" style="color:#d9534f; background:none; border:none; cursor:pointer; font-weight:bold; margin-left:10px;">X</button>
+                </div>`).join('');
+            }, (error) => handleFSListenerError(error, 'Messages'));
+
+            onSnapshot(collection(db, "codes"), (snap) => {
+                const list = document.getElementById('codes-list');
+                if(!list) return;
+                list.innerHTML = '';
+                snap.docs.forEach(d => {
+                    const c = d.data();
+                    list.innerHTML += `<div style="font-size:0.8rem; border-bottom:1px solid #333; padding:5px; display:flex; justify-content:space-between; align-items:center;"><span>/${d.id} (+${c.points} pts)</span> <button onclick="window.delCode('${d.id}')" class="btn-danger" style="padding:2px 5px;">X</button></div>`;
+                });
+            }, (error) => handleFSListenerError(error, 'Codes'));
+        };
+
+        const initSecureListeners = () => {
+            try { setupAllListeners(); } catch (e) { handleFSListenerError(e, 'initSecureListeners'); }
+        };
+
+        // --- TRANSLATION DICTIONARY ---
+        const translations = {
+            en: {
+                loginSub: "Ready your opening move.", userPlaceholder: "Username", passPlaceholder: "Password", enterArena: "Enter Arena",
+                todayRiddle: "Today's Riddle", settingsTitle: "Settings", updatePass: "Update Password", contactAdmin: "Contact Admin",
+                submitTicket: "Submit Ticket", leaderboard: "Leaderboard", chess: "Chess", tricks: "Tricks", global: "Global",
+                adminInbox: "Admin Inbox (Tickets)", userMgmt: "User Management"
+            },
+            de: {
+                loginSub: "Bereiten Sie Ihren Eröffnungszug vor.", userPlaceholder: "Benutzername", passPlaceholder: "Passwort", enterArena: "Arena Betreten",
+                todayRiddle: "Heutiges Rätsel", settingsTitle: "Einstellungen", updatePass: "Passwort Aktualisieren", contactAdmin: "Admin Kontaktieren",
+                submitTicket: "Ticket Einreichen", leaderboard: "Classement", chess: "Schach", tricks: "Astuces", global: "Mondial",
+                adminInbox: "Boîte de réception Admin", userMgmt: "Gestion des Utilisateurs"
+            },
+            fr: {
+                loginSub: "Préparez votre coup d'ouverture.", userPlaceholder: "Nom d'utilisateur", passPlaceholder: "Mot de passe", enterArena: "Entrer dans l'Arène",
+                todayRiddle: "L'énigme d'aujourd'hui", settingsTitle: "Paramètres", updatePass: "Mettre à jour", contactAdmin: "Contacter l'Admin",
+                submitTicket: "Soumettre", leaderboard: "Classement", chess: "Échecs", tricks: "Astuces", global: "Mondial",
+                adminInbox: "Boîte de réception Admin", userMgmt: "Gestion des Utilisateurs"
+            }
+        };
+
+        let currentLang = 'en';
+
+        document.getElementById('lang-selector').addEventListener('change', (e) => {
+            if (e.target.value === 'ar') {
+                alert("Arabic translations coming soon! / الترجمة العربية قريباً!");
+                e.target.value = currentLang;
+                return;
+            }
+            currentLang = e.target.value;
+            applyTranslations();
+        });
+
+        function applyTranslations() {
+            const t = translations[currentLang];
+            document.querySelectorAll('[data-i18n]').forEach(el => { el.innerText = t[el.getAttribute('data-i18n')]; });
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t[el.getAttribute('data-i18n-ph')]; });
+        }
+
+        window.navigateTo = (id) => {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            const el = document.getElementById(id);
+            if(el) el.classList.remove('hidden');
+        };
+
+        window.doLogout = async () => { 
+            localStorage.removeItem('isAdmin'); 
+            try { await signOut(auth); } catch(e) {}
+            window.location.reload(); 
+        };
+
+        window.changeRole = async (targetId, newRole) => {
+            if (!newRole || newRole === '') return;
+            try {
+                await updateDoc(doc(db, "players", targetId), { role: newRole });
+                console.log(`Role changed for ${targetId} to ${newRole}`);
+            } catch(e) {
+                console.error("Error changing role:", e);
+                alert("Failed to change role: " + e.message);
+            }
+        };
+
+        window.deleteUser = async (name) => {
+            if(confirm(`Are you sure?`)) {
+                await deleteDoc(doc(db, "players", name));
+                await deleteDoc(doc(db, "leaderboard", name));
+            }
+        };
+
+        window.quickAdd = async (name, amount) => {
+            await setDoc(doc(db, "leaderboard", name), { name: name, chess: increment(amount) }, { merge: true });
+        };
+
+        window.deleteMsg = async (msgId) => {
+            await deleteDoc(doc(db, "chat", msgId));
+        };
+
+        const toEmail = (n) => n.includes('@') ? n : `${n.toLowerCase().trim()}@chess.tour`;
+
+        const setBtnLoading = (id, loading) => {
+            const btn = document.getElementById(id);
+            if(!btn) return;
+            if(loading) {
+                btn.classList.add('btn-loading');
+                btn.dataset.original = btn.innerHTML;
+                btn.innerHTML = `<div class="spinner"></div>`;
+            } else {
+                btn.classList.remove('btn-loading');
+                btn.innerHTML = btn.dataset.original || btn.innerHTML;
+            }
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const name = user.email.split('@')[0];
+                const userDoc = await getDoc(doc(db, "players", name));
+                
+                if(name === 'admin') { 
+                    currentUserData = { username: 'MainAccount', role: 'owner', id: name };
+                } else if(userDoc.exists()) {
+                    currentUserData = { ...userDoc.data(), id: name };
+                } else {
+                    currentUserData = { username: name, role: 'participant', id: name };
+                }
+
+                const role = currentUserData.role;
+                document.querySelectorAll('.role-owner').forEach(el => el.classList.toggle('hidden', role !== 'owner'));
+                document.querySelectorAll('.role-not-owner').forEach(el => el.classList.toggle('hidden', role === 'owner'));
+                const isHostUp = ['owner', 'admin', 'host'].includes(role);
+                document.querySelectorAll('.role-host-up').forEach(el => el.classList.toggle('hidden', !isHostUp));
+                const isAdminUp = ['owner', 'admin'].includes(role);
+                document.querySelectorAll('.role-admin').forEach(el => el.classList.toggle('hidden', !isAdminUp));
+
+                document.getElementById('user-display').innerHTML = `<b>${currentUserData.username}</b> <span class="role-badge badge-${currentUserData.role}">${currentUserData.role}</span>`;
+                
+                document.getElementById('dashboard-page').classList.remove('hidden');
+                document.getElementById('login-page').classList.add('hidden');
+                
+                loadDashboardOrder();
+                initDragAndDrop();
+                initSecureListeners();
+            } else {
+                document.getElementById('login-page').classList.remove('hidden');
+                document.getElementById('dashboard-page').classList.add('hidden');
+            }
+        });
+
+        document.getElementById('doLogin').onclick = async () => {
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            if(!user || !pass) return;
+            setBtnLoading('doLogin', true);
+            if(user.toLowerCase() === "admin" && pass === "0508") {
+                localStorage.setItem('isAdmin', 'true');
+                location.reload();
+            } else {
+                try { await signInWithEmailAndPassword(auth, toEmail(user), pass); } 
+                catch(e) { alert("Login failed"); setBtnLoading('doLogin', false); }
+            }
+        };
+
+        const toggleChat = () => document.getElementById('chatWindow').classList.toggle('open');
+        document.getElementById('chatToggleBtn').onclick = toggleChat;
+        document.getElementById('chatCloseBtn').onclick = () => document.getElementById('chatWindow').classList.remove('open');
+
+        document.getElementById('sendChat').onclick = async () => {
+            const val = document.getElementById('chat-input').value;
+            if(!val || !currentUserData) return;
+            await addDoc(collection(db, "chat"), { text: val, time: new Date(), author: currentUserData.username, role: currentUserData.role });
+            document.getElementById('chat-input').value = "";
+        };
+
+        const renderLB = () => {
+            const container = document.getElementById('lb-display');
+            container.innerHTML = "";
+            let sorted = lbRawData.map(p => ({
+                ...p, val: currentLBMode === 'chess' ? (p.chess || 0) : currentLBMode === 'tricks' ? (p.tricks || 0) : ((p.chess || 0) + (p.tricks || 0) - 200)
+            })).sort((a,b) => b.val - a.val);
+
+            const isAdmin = currentUserData && currentUserData.role === 'admin';
+
+            sorted.forEach((p, i) => {
+                const isYou = currentUserData && currentUserData.linkedLeaderboard === p.name;
+                const medal = i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : `<span style="color:var(--text-sub); width:20px; display:inline-block;">${i+1}.</span> `;
+                const controls = (isAdmin && currentLBMode === 'chess') ? `<span style="margin-left:10px; display:inline-flex; gap:3px;"><button class="inline-inc-btn" onclick="window.quickAdd('${p.name}', 5)">+5</button></span>` : '';
+                const youBadge = isYou ? `<span style="color:var(--chess-green-bright); font-weight:bold; margin-left:5px; font-size:0.8rem;">((you!))</span>` : '';
+
+                container.innerHTML += `
+                    <div class="item-row ${isYou ? 'is-you' : ''}" style="animation-delay:${i*0.05}s">
+                        <div style="display:flex; align-items:center;">${medal} <b style="margin-left:5px;">${p.name}</b> ${youBadge} ${controls}</div>
+                        <b style="font-size:1.1rem; color:var(--chess-green-bright);">${p.val}</b>
+                    </div>`;
+            });
+        };
+
+        ['chess', 'tricks', 'global'].forEach(mode => {
+            document.getElementById(`tab-${mode}`).onclick = (e) => {
+                currentLBMode = mode;
+                document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active'); renderLB();
+            };
+        });
+
+        document.getElementById('updateLB').onclick = async () => {
+            const n = document.getElementById('lb-name').value;
+            const c = parseInt(document.getElementById('lb-chess').value) || 0;
+            const t = parseInt(document.getElementById('lb-trick').value) || 0;
+            if(n) await setDoc(doc(db, "leaderboard", n), { name: n, chess: c, tricks: t }, {merge: true});
+        };
+
+        document.getElementById('saveRiddle').onclick = async () => {
+            const text = document.getElementById('edit-riddle-text').value.trim();
+            const url = document.getElementById('edit-riddle-url').value.trim();
+            if (!text && !url) return alert("Enter at least description or image URL");
+            setBtnLoading('saveRiddle', true);
+            try {
+                await setDoc(doc(db, "content", "riddle"), { text, url }, { merge: true });
+                alert("Riddle updated!");
+            } catch(e) {
+                console.error("Error saving riddle:", e);
+                alert("Failed to update riddle");
+            }
+            setBtnLoading('saveRiddle', false);
+        };
+
+        document.getElementById('createUser').onclick = async () => {
+            const name = document.getElementById('new-name').value;
+            const pass = document.getElementById('new-pass').value;
+            if(!name || pass.length < 6) return alert("Min 6 chars");
+            setBtnLoading('createUser', true);
+            try {
+                await createUserWithEmailAndPassword(auth, toEmail(name), pass);
+                await setDoc(doc(db, "players", name), { username: name, role: 'participant' });
+                alert("Created!");
+                document.getElementById('new-name').value = '';
+                document.getElementById('new-pass').value = '';
+            } catch(e) { alert(e.message); }
+            setBtnLoading('createUser', false);
+        };
+
+        document.getElementById('doLink').onclick = async () => {
+            const authUser = document.getElementById('link-user').value.trim();
+            const lbUser = document.getElementById('link-lb').value.trim();
+            if(!authUser || !lbUser) return alert("Fill both fields");
+            await updateDoc(doc(db, "players", authUser), { linkedLeaderboard: lbUser });
+            alert(`Linked ${authUser} to ${lbUser}`);
+            document.getElementById('link-user').value = '';
+            document.getElementById('link-lb').value = '';
+        };
+
+        // --- OWNER INBOX LISTENER ---
+        let ownerInboxActive = false;
+        function startOwnerInbox() {
+            if (!currentUserData || currentUserData.role !== 'owner') return;
+            if (ownerInboxActive) return;
+            ownerInboxActive = true;
+
+            onSnapshot(query(collection(db, "messages"), orderBy("time", "desc")), (snap) => {
+                const container = document.getElementById('inbox-container');
+                if (!container) return;
+                container.innerHTML = snap.docs.map(d => `<div style="background:#1a1a1a; padding:10px; margin-bottom:5px; border-radius:8px; border-left:3px solid #9b59b6; display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="flex:1;"><b>${d.data().from}:</b> ${d.data().text}</div>
+                    <button onclick="window.delInbox('${d.id}')" style="color:#d9534f; background:none; border:none; cursor:pointer; font-weight:bold; margin-left:10px;">X</button>
+                </div>`).join('');
+            }, (err) => handleFSListenerError(err, 'OwnerInbox'));
+        }
+
+        window.delInbox = async (msgId) => {
+            if(confirm('Delete this message?')) await deleteDoc(doc(db, "messages", msgId));
+        };
+
+        // --- ADMIN/OWNER: USER MANAGEMENT ---
+        let userMgmtActive = false;
+        function startUserManagement() {
+            if (!currentUserData || !['owner', 'admin'].includes(currentUserData.role)) return;
+            if (userMgmtActive) return;
+            userMgmtActive = true;
+
+            onSnapshot(collection(db, "players"), (snap) => {
+                const list = document.getElementById('admin-user-list');
+                if (!list) return;
+                list.innerHTML = '';
+                snap.docs.forEach(d => {
+                    const user = d.data();
+                    const username = user.username || d.id;
+                    const role = user.role || 'participant';
+                    const div = document.createElement('div');
+                    div.className = 'user-list-item';
+                    div.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.9rem;"><b>${username}</b> <small>(${role})</small></span>
+                            <div style="display:flex; gap:5px;">
+                                <select onchange="window.changeRole('${d.id}', this.value)" style="background:#1a1a1a; border:1px solid #333; color:white; padding:4px; border-radius:4px; cursor:pointer; font-size:0.7rem;">
+                                    <option value="${role}">${role}</option>
+                                    <option value="participant">participant</option>
+                                    <option value="host">host</option>
+                                    <option value="admin">admin</option>
+                                </select>
+                                <button onclick="window.resetPass('${d.id}')" style="background:#d9534f; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">RESET</button>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            }, (err) => handleFSListenerError(err, 'UserMgmt'));
+        }
+
+        // --- ADMIN/OWNER: Change Roles & Password Flag ---
+        window.changeRole = async (targetId, newRole) => {
+            if (confirm(`Change role to ${newRole}?`)) {
+                await updateDoc(doc(db, "players", targetId), { role: newRole });
+            }
+        };
+
+        window.resetPass = async (targetId) => {
+            if (confirm(`Force reset for ${targetId}?`)) {
+                await setDoc(doc(db, "password_resets", targetId), { 
+                    target: targetId, newPass: "123456", time: new Date() 
+                });
+                alert("Reset flag set to 123456.");
+            }
+        };
+
+        // --- HOST/ADMIN/OWNER: Emphasis Message with 5m Cooldown ---
+        let lastEmphasisTime = 0;
+        document.getElementById('sendEmphasis').onclick = async () => {
+            const now = Date.now();
+            const cooldown = 5 * 60 * 1000;
+
+            if (now - lastEmphasisTime < cooldown) {
+                const remaining = Math.ceil((cooldown - (now - lastEmphasisTime)) / 60000);
+                alert(`Cooldown active! Wait ${remaining} more minute(s).`);
+                return;
+            }
+
+            const text = document.getElementById('chat-input').value.trim();
+            if (text) {
+                await addDoc(collection(db, "chat"), { 
+                    author: currentUserData.username, text, time: new Date(), role: currentUserData.role, isEmphasis: true 
+                });
+                document.getElementById('chat-input').value = '';
+                lastEmphasisTime = Date.now();
+            }
+        };
+
+        // --- NON-OWNER: Send Support Ticket ---
+        document.getElementById('sendSupport').onclick = async () => {
+            const val = document.getElementById('support-input').value;
+            if(!val || !currentUserData) return alert("Enter a message");
+            try {
+                await addDoc(collection(db, "messages"), { text: val, time: new Date(), from: currentUserData.username });
+                alert("Ticket sent to owner!");
+                document.getElementById('support-input').value = "";
+            } catch(e) { alert("Error sending ticket"); }
+        };
+
+        // --- COMMAND BAR LOGIC ---
+        window.addEventListener('keydown', (e) => {
+            // Open bar if '/' is pressed and dashboard is visible
+            if (e.key === '/' && !document.getElementById('dashboard-page').classList.contains('hidden')) {
+                if(document.activeElement.id !== 'chat-input' && document.activeElement.id !== 'mc-input') {
+                    e.preventDefault();
+                    document.getElementById('mc-command-bar').style.display = 'flex';
+                    document.getElementById('mc-input').focus();
+                    document.getElementById('mc-input').value = '';
+                }
+            }
+            if (e.key === 'Escape') document.getElementById('mc-command-bar').style.display = 'none';
+        });
+
+        document.getElementById('mc-input').addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const val = e.target.value.trim().toLowerCase();
+                document.getElementById('mc-command-bar').style.display = 'none';
+                processCommand(val);
+            }
+        });
+
+        async function processCommand(code) {
+            if(!currentUserData) return showMCMessage("Not logged in!");
+            
+            const codeDoc = await getDoc(doc(db, "codes", code));
+            if (!codeDoc.exists()) return showMCMessage("Unknown Command.");
+
+            const data = codeDoc.data();
+            const usageId = `${currentUserData.id}_${code}`;
+            const usedCheck = await getDoc(doc(db, "used_codes", usageId));
+            
+            if (usedCheck.exists()) return showMCMessage("Command already used by this account!");
+
+            const lbName = currentUserData.linkedLeaderboard || currentUserData.username;
+            const lbEntry = lbRawData.find(p => p.name.toLowerCase() === lbName.toLowerCase());
+
+            if (lbEntry) {
+                await updateDoc(doc(db, "leaderboard", lbEntry.id), { tricks: increment(data.points) });
+                await setDoc(doc(db, "used_codes", usageId), { used: true, time: new Date() });
+                showMCMessage(data.message || `Code accepted! +${data.points} Trick Points.`);
+            } else {
+                showMCMessage("Error: Account not linked to Leaderboard.");
+            }
+        }
+
+        function showMCMessage(text) {
+            const p = document.getElementById('mc-message-popup');
+            p.innerText = text;
+            p.style.display = 'block';
+            setTimeout(() => { p.style.display = 'none'; }, 4000);
+        }
+
+        // --- ADMIN CODE MANAGEMENT ---
+        document.getElementById('createCode').onclick = async () => {
+            const str = document.getElementById('code-str').value.trim().toLowerCase();
+            const pts = parseInt(document.getElementById('code-pts').value);
+            const msg = document.getElementById('code-msg').value;
+            if(!str || isNaN(pts)) return alert("Fill code and points");
+            setBtnLoading('createCode', true);
+            try {
+                await setDoc(doc(db, "codes", str), { points: pts, message: msg });
+                document.getElementById('code-str').value = '';
+                document.getElementById('code-pts').value = '';
+                document.getElementById('code-msg').value = '';
+                alert("Code Created!");
+            } catch(e) { alert(e.message); }
+            setBtnLoading('createCode', false);
+        };
+
+        window.delCode = async (id) => {
+            if(confirm('Delete this code?')) await deleteDoc(doc(db, "codes", id));
+        };
+    </script>
+</body>
+</html>
