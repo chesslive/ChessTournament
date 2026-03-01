@@ -73,6 +73,9 @@
         .item-row:hover { border-left-color: var(--chess-green); background: #222; }
         .item-row.is-you { border-left-color: var(--chess-green-bright); background: rgba(92, 147, 74, 0.1); }
         
+        .item-row.hidden-lb-item { display: none; }
+        .item-row.hidden-lb-item.visible { display: flex; }
+
         .admin-section { border: 1px dashed var(--chess-green); padding: 15px; border-radius: 10px; margin-top: 15px; background: rgba(92, 147, 74, 0.03); }
         .user-list-item { border-bottom: 1px solid var(--border); padding: 10px 0; display: flex; flex-direction: column; gap: 5px; }
         
@@ -322,6 +325,8 @@
         let currentLBMode = 'chess';
         let listenersActive = false;
         let draggedElement = null;
+
+        let lbExpanded = false;
 
         // Shared Firestore listener error handler to avoid uncaught errors
         const handleFSListenerError = (error, ctx = 'Firestore') => {
@@ -650,13 +655,32 @@
                 const medal = i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : `<span style="color:var(--text-sub); width:20px; display:inline-block;">${i+1}.</span> `;
                 const controls = (isAdmin && currentLBMode === 'chess') ? `<span style="margin-left:10px; display:inline-flex; gap:3px;"><button class="inline-inc-btn" onclick="window.quickAdd('${p.name}', 5)">+5</button></span>` : '';
                 const youBadge = isYou ? `<span style="color:var(--chess-green-bright); font-weight:bold; margin-left:5px; font-size:0.8rem;">((you!))</span>` : '';
+                const isHidden = i >= 3 && !lbExpanded;
+                const hiddenClass = isHidden ? 'hidden-lb-item' : '';
 
                 container.innerHTML += `
-                    <div class="item-row ${isYou ? 'is-you' : ''}" style="animation-delay:${i*0.05}s">
+                    <div class="item-row ${isYou ? 'is-you' : ''} ${hiddenClass}" style="animation-delay:${i*0.05}s">
                         <div style="display:flex; align-items:center;">${medal} <b style="margin-left:5px;">${p.name}</b> ${youBadge} ${controls}</div>
                         <b style="font-size:1.1rem; color:var(--chess-green-bright);">${p.val}</b>
                     </div>`;
             });
+
+            // Add toggle button after rendering
+            const existingBtn = container.nextElementSibling;
+            if (existingBtn && existingBtn.classList.contains('lb-toggle-btn')) {
+                existingBtn.remove();
+            }
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'btn-main lb-toggle-btn';
+            toggleBtn.style.width = '100%';
+            toggleBtn.style.marginTop = '10px';
+            toggleBtn.innerText = lbExpanded ? '▲ Hide Leaderboard' : '▼ Show All Rankings';
+            toggleBtn.onclick = () => {
+                lbExpanded = !lbExpanded;
+                renderLB();
+            };
+            container.parentNode.insertBefore(toggleBtn, container.nextSibling);
         };
 
         ['chess', 'tricks', 'global'].forEach(mode => {
