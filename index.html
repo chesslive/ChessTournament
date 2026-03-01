@@ -113,6 +113,11 @@
             .chat-input-area { border-radius: 0; padding: 15px; padding-bottom: 30px; }
         }
 
+        /* Smooth Mobile Touch */
+        * { touch-action: manipulation; }
+        .btn-main, .btn-danger, .inline-inc-btn, .lb-tab { -webkit-tap-highlight-color: transparent; }
+        button, select, input, a { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+
         /* Minecraft Command Bar */
         #mc-command-bar {
             position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.9);
@@ -255,7 +260,7 @@
                     </div>
                     
                     <div class="admin-section" style="margin-top: 15px;">
-                        <h4>Link Account to Leaderboard</h4>
+                        <h4>Link Account to Leaderboard</h3>
                         <input type="text" id="link-user" class="input-field" placeholder="Auth Username">
                         <input type="text" id="link-lb" class="input-field" placeholder="Leaderboard Name">
                         <button class="btn-main" id="doLink" style="width:100%; margin-top: 10px;">Link Data</button>
@@ -457,6 +462,8 @@
                                     <option value="admin">admin</option>
                                 </select>
                                 <button onclick="window.resetPass('${d.id}')" style="background:#d9534f; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">RESET</button>
+                                <button onclick="window.banUserDialog('${d.id}', '${username}')" style="background:#f39c12; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">BAN</button>
+                                <button onclick="window.deleteUserConfirm('${d.id}', '${username}')" style="background:#c9302c; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">DELETE</button>
                             </div>
                         </div>
                     `;
@@ -583,50 +590,98 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const name = user.email.split('@')[0];
-                const userDoc = await getDoc(doc(db, "players", name));
-                
-                if(name === 'admin') { 
-                    currentUserData = { username: 'MainAccount', role: 'owner', id: name };
-                } else if(userDoc.exists()) {
-                    currentUserData = { ...userDoc.data(), id: name };
-                } else {
-                    currentUserData = { username: name, role: 'participant', id: name };
+                try {
+                    const name = user.email.split('@')[0];
+                    const userDoc = await getDoc(doc(db, "players", name));
+                    
+                    if(name === 'admin') { 
+                        currentUserData = { username: 'MainAccount', role: 'owner', id: name };
+                    } else if(userDoc.exists()) {
+                        currentUserData = { ...userDoc.data(), id: name };
+                    } else {
+                        currentUserData = { username: name, role: 'participant', id: name };
+                    }
+
+                    // Listen to real-time updates for current user to refresh role changes
+                    onSnapshot(doc(db, "players", name), (docSnapshot) => {
+                        if (docSnapshot.exists()) {
+                            currentUserData = { ...docSnapshot.data(), id: name };
+                            updateRoleDisplay();
+                        }
+                    }, (err) => console.warn("Current user listener error:", err));
+
+                    const role = currentUserData.role;
+                    updateRoleDisplay();
+                    
+                    document.getElementById('dashboard-page').classList.remove('hidden');
+                    document.getElementById('login-page').classList.add('hidden');
+                    
+                    loadDashboardOrder();
+                    initDragAndDrop();
+                    initSecureListeners();
+                    startOwnerInbox();
+                    startUserManagement();
+                } catch(e) {
+                    console.error("Auth state error:", e);
+                    alert("Error loading user data. Please try logging in again.");
+                    try { await signOut(auth); } catch(err) {}
                 }
-
-                const role = currentUserData.role;
-                document.querySelectorAll('.role-owner').forEach(el => el.classList.toggle('hidden', role !== 'owner'));
-                document.querySelectorAll('.role-not-owner').forEach(el => el.classList.toggle('hidden', role === 'owner'));
-                const isHostUp = ['owner', 'admin', 'host'].includes(role);
-                document.querySelectorAll('.role-host-up').forEach(el => el.classList.toggle('hidden', !isHostUp));
-                const isAdminUp = ['owner', 'admin'].includes(role);
-                document.querySelectorAll('.role-admin').forEach(el => el.classList.toggle('hidden', !isAdminUp));
-
-                document.getElementById('user-display').innerHTML = `<b>${currentUserData.username}</b> <span class="role-badge badge-${currentUserData.role}">${currentUserData.role}</span>`;
-                
-                document.getElementById('dashboard-page').classList.remove('hidden');
-                document.getElementById('login-page').classList.add('hidden');
-                
-                loadDashboardOrder();
-                initDragAndDrop();
-                initSecureListeners();
             } else {
                 document.getElementById('login-page').classList.remove('hidden');
                 document.getElementById('dashboard-page').classList.add('hidden');
             }
         });
 
+        function updateRoleDisplay() {
+            if (!currentUserData) return;
+            const role = currentUserData.role;
+            document.querySelectorAll('.role-owner').forEach(el => el.classList.toggle('hidden', role !== 'owner'));
+            document.querySelectorAll('.role-not-owner').forEach(el => el.classList.toggle('hidden', role === 'owner'));
+            const isHostUp = ['owner', 'admin', 'host'].includes(role);
+            document.querySelectorAll('.role-host-up').forEach(el => el.classList.toggle('hidden', !isHostUp));
+            const isAdminUp = ['owner', 'admin'].includes(role);
+            document.querySelectorAll('.role-admin').forEach(el => el.classList.toggle('hidden', !isAdminUp));
+            document.getElementById('user-display').innerHTML = `<b>${currentUserData.username}</b> <span class="role-badge badge-${currentUserData.role}">${currentUserData.role}</span>`;
+        }
+
         document.getElementById('doLogin').onclick = async () => {
             const user = document.getElementById('login-user').value.trim();
             const pass = document.getElementById('login-pass').value;
-            if(!user || !pass) return;
+            if(!user || !pass) return alert("Please enter username and password");
             setBtnLoading('doLogin', true);
-            if(user.toLowerCase() === "admin" && pass === "0508") {
-                localStorage.setItem('isAdmin', 'true');
-                location.reload();
-            } else {
-                try { await signInWithEmailAndPassword(auth, toEmail(user), pass); } 
-                catch(e) { alert("Login failed"); setBtnLoading('doLogin', false); }
+            
+            try {
+                if(user.toLowerCase() === "admin" && pass === "0508") {
+                    localStorage.setItem('isAdmin', 'true');
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    location.reload();
+                } else {
+                    const email = toEmail(user);
+                    console.log("Attempting login with email:", email); // Debug log
+                    await signInWithEmailAndPassword(auth, email, pass);
+                }
+            } catch(e) {
+                console.error("Login error:", e);
+                let errorMsg = "Login failed";
+                
+                if (e.code === 'auth/user-not-found') {
+                    errorMsg = "User not found. Ask an admin to create your account.";
+                } else if (e.code === 'auth/wrong-password') {
+                    errorMsg = "Wrong password";
+                } else if (e.code === 'auth/invalid-credential') {
+                    errorMsg = "Invalid username or password. User may not exist yet.";
+                } else if (e.code === 'auth/invalid-email') {
+                    errorMsg = "Invalid email format";
+                } else if (e.code === 'auth/user-disabled') {
+                    errorMsg = "User account disabled";
+                } else if (e.code === 'auth/too-many-requests') {
+                    errorMsg = "Too many login attempts. Try again later.";
+                } else {
+                    errorMsg = e.message || "Authentication error";
+                }
+                
+                alert(errorMsg);
+                setBtnLoading('doLogin', false);
             }
         };
 
@@ -635,10 +690,60 @@
         document.getElementById('chatCloseBtn').onclick = () => document.getElementById('chatWindow').classList.remove('open');
 
         document.getElementById('sendChat').onclick = async () => {
-            const val = document.getElementById('chat-input').value;
+            const val = document.getElementById('chat-input').value.trim();
             if(!val || !currentUserData) return;
-            await addDoc(collection(db, "chat"), { text: val, time: new Date(), author: currentUserData.username, role: currentUserData.role });
-            document.getElementById('chat-input').value = "";
+            
+            const isBanned = await checkChatBan();
+            if (isBanned) {
+                alert("You are banned from chat.");
+                document.getElementById('chat-input').value = "";
+                return;
+            }
+            
+            try {
+                await addDoc(collection(db, "chat"), { text: val, time: new Date(), author: currentUserData.username, role: currentUserData.role });
+                document.getElementById('chat-input').value = "";
+            } catch(e) { 
+                alert("Error sending message");
+            }
+        };
+
+        // --- BAN CHECK FOR CHAT ---
+        async function checkChatBan() {
+            if (!currentUserData) return false;
+            
+            try {
+                const playerDoc = await getDoc(doc(db, "players", currentUserData.id));
+                if (playerDoc.exists()) {
+                    const playerData = playerDoc.data();
+                    
+                    // Check if chat banned
+                    if (playerData && playerData.chatBanned === true) {
+                        const now = new Date();
+                        
+                        // Permanent ban (no expiry)
+                        if (!playerData.chatBanUntil) {
+                            return true;
+                        }
+                        
+                        // Temporary ban - check if expired
+                        const banUntilTime = new Date(playerData.chatBanUntil).getTime();
+                        if (now.getTime() < banUntilTime) {
+                            return true; // Still banned
+                        } else {
+                            // Ban expired, remove it
+                            await updateDoc(doc(db, "players", currentUserData.id), { 
+                                chatBanned: false,
+                                chatBanUntil: null
+                            });
+                            return false;
+                        }
+                    }
+                }
+            } catch(e) {
+                console.warn("Chat ban check error:", e);
+            }
+            return false;
         };
 
         const renderLB = () => {
@@ -779,7 +884,7 @@
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:0.9rem;"><b>${username}</b> <small>(${role})</small></span>
-                            <div style="display:flex; gap:5px;">
+                            <div style="display:flex; gap:5px; flex-wrap: wrap;">
                                 <select onchange="window.changeRole('${d.id}', this.value)" style="background:#1a1a1a; border:1px solid #333; color:white; padding:4px; border-radius:4px; cursor:pointer; font-size:0.7rem;">
                                     <option value="${role}">${role}</option>
                                     <option value="participant">participant</option>
@@ -787,6 +892,8 @@
                                     <option value="admin">admin</option>
                                 </select>
                                 <button onclick="window.resetPass('${d.id}')" style="background:#d9534f; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">RESET</button>
+                                <button onclick="window.banUserDialog('${d.id}', '${username}')" style="background:#f39c12; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">BAN</button>
+                                <button onclick="window.deleteUserConfirm('${d.id}', '${username}')" style="background:#c9302c; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">DELETE</button>
                             </div>
                         </div>
                     `;
@@ -797,8 +904,10 @@
 
         // --- ADMIN/OWNER: Change Roles & Password Flag ---
         window.changeRole = async (targetId, newRole) => {
-            if (confirm(`Change role to ${newRole}?`)) {
+            try {
                 await updateDoc(doc(db, "players", targetId), { role: newRole });
+            } catch(e) {
+                alert("Failed to change role: " + e.message);
             }
         };
 
@@ -811,37 +920,44 @@
             }
         };
 
-        // --- HOST/ADMIN/OWNER: Emphasis Message with 5m Cooldown ---
-        let lastEmphasisTime = 0;
-        document.getElementById('sendEmphasis').onclick = async () => {
-            const now = Date.now();
-            const cooldown = 5 * 60 * 1000;
-
-            if (now - lastEmphasisTime < cooldown) {
-                const remaining = Math.ceil((cooldown - (now - lastEmphasisTime)) / 60000);
-                alert(`Cooldown active! Wait ${remaining} more minute(s).`);
-                return;
-            }
-
-            const text = document.getElementById('chat-input').value.trim();
-            if (text) {
-                await addDoc(collection(db, "chat"), { 
-                    author: currentUserData.username, text, time: new Date(), role: currentUserData.role, isEmphasis: true 
-                });
-                document.getElementById('chat-input').value = '';
-                lastEmphasisTime = Date.now();
+        window.deleteUserConfirm = async (targetId, username) => {
+            if (confirm(`🚨 PERMANENTLY DELETE ${username}? This cannot be undone!`)) {
+                if (confirm(`Are you absolutely sure? Type "DELETE" to confirm.`) && confirm("Final confirmation - user will be deleted")) {
+                    try {
+                        await deleteDoc(doc(db, "players", targetId));
+                        await deleteDoc(doc(db, "leaderboard", targetId));
+                        alert(`User ${username} has been deleted.`);
+                    } catch(e) {
+                        alert("Error deleting user: " + e.message);
+                    }
+                }
             }
         };
 
-        // --- NON-OWNER: Send Support Ticket ---
-        document.getElementById('sendSupport').onclick = async () => {
-            const val = document.getElementById('support-input').value;
-            if(!val || !currentUserData) return alert("Enter a message");
+        window.banUserDialog = async (targetId, username) => {
+            const hours = prompt(`Ban ${username} from chat for how many hours? (0 = permanent)`, "24");
+            if (hours === null) return;
+            
+            const banHours = parseInt(hours);
+            if (isNaN(banHours) || banHours < 0) return alert("Invalid number");
+            
             try {
-                await addDoc(collection(db, "messages"), { text: val, time: new Date(), from: currentUserData.username });
-                alert("Ticket sent to owner!");
-                document.getElementById('support-input').value = "";
-            } catch(e) { alert("Error sending ticket"); }
+                const banData = {
+                    chatBanned: true,
+                    chatBannedAt: new Date(),
+                    chatBanDurationHours: banHours,
+                    chatBanReason: "Admin ban"
+                };
+                if (banHours > 0) {
+                    banData.chatBanUntil = new Date(Date.now() + banHours * 60 * 60 * 1000);
+                }
+                
+                await updateDoc(doc(db, "players", targetId), banData);
+                alert(`${username} chat banned for ${banHours === 0 ? 'permanently' : banHours + ' hours'}.`);
+            } catch(e) {
+                console.error("Ban error:", e);
+                alert("Error banning user: " + e.message);
+            }
         };
 
         // --- COMMAND BAR LOGIC ---
