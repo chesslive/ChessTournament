@@ -2,1053 +2,901 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess.Tour.7B | Tournament Hub</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
+    <title>Spelling Bee Pro | Deluxe Mobile</title>
     <style>
         :root {
-            --bg-body: #0a0a0a; --bg-card: #141414; --chess-green: #5c934a; --chess-green-bright: #7ac463;
-            --text-main: #ffffff; --text-sub: #a0a0a0; --border: #222;
-        }
-        [data-theme="light"] {
-            --bg-body: #f0f0f0; --bg-card: #ffffff; --chess-green: #4a7a3b; --chess-green-bright: #5c934a;
-            --text-main: #121212; --text-sub: #666666; --border: #ccc;
-        }
-
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-body); color: var(--text-main); transition: 0.3s; overflow-x: hidden; }
-        .view { min-height: 100vh; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; position: relative; }
-        .hidden { display: none !important; }
-
-        /* Animations */
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(5deg); } }
-        
-        .card { 
-            background: var(--bg-card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; position: relative; 
-            animation: slideUp 0.5s ease forwards;
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --glass: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
         }
 
-        /* Buttons & Inputs */
-        .btn-main { background: var(--chess-green); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1rem; }
-        .btn-main:hover { transform: translateY(-2px); background: var(--chess-green-bright); box-shadow: 0 4px 15px rgba(92, 147, 74, 0.4); }
-        .btn-loading { pointer-events: none; opacity: 0.7; }
-        .btn-danger { background: #d9534f; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; transition: 0.2s; }
-        .btn-danger:hover { background: #c9302c; }
-        
-        .input-field { background: #1a1a1a; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; transition: 0.2s; font-size: 16px; }
-        [data-theme="light"] .input-field { background: #f5f5f5; color: #121212; }
-        .input-field:focus { border-color: var(--chess-green); outline: none; box-shadow: 0 0 10px rgba(92,147,74,0.2); }
-
-        /* Language Select In Header */
-        .lang-select { background: #000; color: var(--text-main); border: 1px solid var(--border); padding: 5px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; cursor: pointer; outline: none; }
-
-        /* Login Screen Fun Styles */
-        #login-page { justify-content: center; align-items: center; overflow: hidden; }
-        .bg-pieces { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.05; pointer-events: none; }
-        .bg-pieces i { position: absolute; color: var(--chess-green); animation: float 6s ease-in-out infinite; }
-        .p1 { top: 10%; left: 10%; font-size: 10rem; animation-delay: 0s; }
-        .p2 { bottom: 15%; right: 10%; font-size: 14rem; animation-delay: 2s; }
-        .p3 { top: 30%; right: 20%; font-size: 8rem; animation-delay: 1s; }
-        .p4 { bottom: 20%; left: 20%; font-size: 12rem; animation-delay: 3s; }
-        
-        .login-box {
-            background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1);
-            padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); z-index: 10; box-sizing: border-box;
+        * { 
+            box-sizing: border-box; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
         }
 
-        /* Leaderboard & Inline Buttons */
-        .inline-inc-btn { background: rgba(92, 147, 74, 0.2); color: var(--chess-green-bright); border: 1px solid var(--chess-green); padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: 0.2s; margin-left: 2px;}
-        .inline-inc-btn:hover { background: var(--chess-green); color: white; transform: scale(1.1); }
-        .lb-tabs { display: flex; gap: 5px; margin-bottom: 15px; background: #000; padding: 5px; border-radius: 8px; }
-        .lb-tab { flex: 1; border: none; background: none; color: var(--text-sub); padding: 8px; cursor: pointer; border-radius: 5px; font-size: 0.8rem; transition: 0.3s; font-weight: bold; }
-        .lb-tab.active { background: var(--chess-green); color: white; }
-
-        .dashboard-container { display: flex; flex-wrap: wrap; gap: 20px; max-width: 100%; margin: 0 auto; width: 100%; }
-        .dashboard-item { flex: 1; min-width: 350px; max-width: calc(50% - 10px); }
-        @media (max-width: 1400px) { .dashboard-item { max-width: calc(50% - 10px); } }
-        @media (max-width: 900px) { .dashboard-item { max-width: 100%; min-width: 100%; } }
-
-        .item-row { background: #1a1a1a; padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; border-left: 3px solid transparent; word-break: break-all;}
-        .item-row:hover { border-left-color: var(--chess-green); background: #222; }
-        .item-row.is-you { border-left-color: var(--chess-green-bright); background: rgba(92, 147, 74, 0.1); }
-        
-        .item-row.hidden-lb-item { display: none; }
-        .item-row.hidden-lb-item.visible { display: flex; }
-
-        .admin-section { border: 1px dashed var(--chess-green); padding: 15px; border-radius: 10px; margin-top: 15px; background: rgba(92, 147, 74, 0.03); }
-        .user-list-item { border-bottom: 1px solid var(--border); padding: 10px 0; display: flex; flex-direction: column; gap: 5px; }
-        
-        .role-badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 5px; font-weight: bold; letter-spacing: 0.5px; }
-        .badge-admin { background: #d9534f; color: white; box-shadow: 0 0 5px #d9534f; }
-        .badge-host { background: #f0ad4e; color: #000; }
-        .badge-participant { background: #5bc0de; color: #000; }
-        .badge-owner { background: #9b59b6; color: white; box-shadow: 0 0 5px #9b59b6; }
-
-        /* Floating Chat Bubble & Chat Window */
-        .chat-fab { position: fixed; bottom: 30px; right: 30px; background: var(--chess-green); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.4); transition: 0.3s; z-index: 100; }
-        .chat-fab:hover { transform: scale(1.1) rotate(10deg); }
-        .chat-window { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 450px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 15px; box-shadow: 0 15px 30px rgba(0,0,0,0.5); display: flex; flex-direction: column; z-index: 99; transition: 0.3s; opacity: 0; pointer-events: none; transform: translateY(20px); }
-        .chat-window.open { opacity: 1; pointer-events: all; transform: translateY(0); }
-        .chat-header { background: #000; padding: 15px; border-radius: 15px 15px 0 0; font-weight: bold; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;}
-        .chat-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .chat-input-area { padding: 10px; background: #000; border-radius: 0 0 15px 15px; display: flex; gap: 10px; }
-        
-        .chat-msg { background: #1a1a1a; padding: 10px; border-radius: 10px; position: relative; font-size: 0.9rem; word-break: break-word;}
-        .chat-msg .author { font-weight: bold; color: var(--chess-green); font-size: 0.75rem; margin-bottom: 3px; display: flex; align-items: center; gap: 5px;}
-        
-        .chat-msg.admin-msg { background: rgba(217, 83, 79, 0.1); border: 1px solid #d9534f; }
-        .chat-msg.admin-msg .author { color: #d9534f; }
-        .chat-msg.admin-msg .text-body { font-weight: bold; color: #fff; }
-        
-        .delete-msg-btn { position: absolute; top: 10px; right: 10px; color: #666; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
-        .delete-msg-btn:hover { color: #d9534f; }
-        
-        /* Mobile Adjustments */
-        @media (max-width: 1000px) { 
-            .dashboard-item { max-width: 100%; min-width: 100%; }
-            .chat-window { bottom: 0; right: 0; width: 100%; height: 100vh; border-radius: 0; position: fixed; z-index: 1000; } 
-            .chat-fab { bottom: 20px; right: 20px; z-index: 1001; }
-            .chat-header { border-radius: 0; padding: 20px; }
-            .chat-input-area { border-radius: 0; padding: 15px; padding-bottom: 30px; }
+        /* --- ALL REACTIVE THEMES --- */
+        .bg-default { 
+            background: #0f172a; 
+            color: #f8fafc; 
         }
 
-        /* Smooth Mobile Touch */
-        * { touch-action: manipulation; }
-        .btn-main, .btn-danger, .inline-inc-btn, .lb-tab { -webkit-tap-highlight-color: transparent; }
-        button, select, input, a { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-
-        /* Minecraft Command Bar */
-        #mc-command-bar {
-            position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.9);
-            border-top: 2px solid #555; padding: 10px 20px; box-sizing: border-box; z-index: 1000;
-            display: none; align-items: center; gap: 10px; font-family: 'Courier New', monospace;
+        .bg-ocean { 
+            background: linear-gradient(135deg, #075985, #1e3a8a); 
+            color: white; 
         }
-        #mc-command-bar span { color: #aaa; font-weight: bold; font-size: 1.2rem; }
-        #mc-input { background: transparent; border: none; color: white; outline: none; width: 100%; font-size: 1.1rem; }
 
-        /* Minecraft Success/Error Popup */
-        .mc-message { 
-            position: fixed; top: 20%; left: 50%; transform: translateX(-50%); 
-            background: rgba(0,0,0,0.9); border: 2px solid #5c934a; padding: 20px; 
-            border-radius: 10px; color: white; z-index: 2000; display: none; 
-            text-align: center; font-family: 'Courier New', monospace; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+        .bg-neon { 
+            background: #000; 
+            color: #00ff41; 
+            text-shadow: 0 0 8px #00ff41; 
+        }
+
+        .bg-galaxy { 
+            background: radial-gradient(circle at 30% 30%, #2e1065, #000000, #0f172a);
+            background-size: 200% 200%;
+            color: #f0e68c;
+            text-shadow: 0 0 10px #c084fc;
+        }
+        
+        /* Chess: Grandmaster Checkers */
+        .bg-chess { 
+            background-color: #ffffff;
+            background-image: repeating-conic-gradient(#2c2c2c 0% 25%, #ffffff 0% 50%);
+            background-position: 0 0, 30px 30px;
+            background-size: 60px 60px;
+            color: #000;
+        }
+
+        /* Roblox: Red/Dark with brick pattern */
+        .bg-roblox { 
+            background: #202225 repeating-linear-gradient(45deg, rgba(255,0,0,0.2) 0px, rgba(255,0,0,0.2) 20px, transparent 20px, transparent 40px);
+            border-top: 10px solid #f63131; 
+            color: white; 
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        /* Fortnite: Storm with lightning bolts */
+        .bg-fortnite { 
+            background: linear-gradient(135deg, #1a0b2e 0%, #2a1b4a 50%, #0b3b5c 100%);
+            position: relative;
+            color: #a0e7ff;
+            text-shadow: 0 0 8px #0077ff;
+        }
+        .bg-fortnite::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(0deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 2px, transparent 2px, transparent 8px);
+            pointer-events: none;
+        }
+
+        /* Lilly Love Braids (Poppy Playtime style) - Now using CSS pattern */
+        .bg-secret { 
+            background-color: #f8c8dc;
+            background-image: 
+                radial-gradient(circle at 20% 30%, #ffb6c1 5%, transparent 5%),
+                radial-gradient(circle at 80% 70%, #ffb6c1 5%, transparent 5%),
+                repeating-linear-gradient(45deg, transparent, transparent 10px, #ff99aa 10px, #ff99aa 20px);
+            color: #4a1a2c;
+            text-shadow: 2px 2px 5px #fff2f5;
+        }
+
+        /* New themes */
+        .bg-midnight {
+            background: #0a0f1e;
+            color: #cbd5e1;
+            box-shadow: inset 0 0 100px #2563eb20;
+        }
+        .bg-sunset {
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            color: #2d1b0e;
+        }
+        .bg-forest {
+            background: #0b3b2f repeating-linear-gradient(45deg, #2e7d5e 0px, #2e7d5e 2px, transparent 2px, transparent 12px);
+            color: #e7f5e7;
+        }
+        .bg-oceandeep {
+            background: linear-gradient(145deg, #006994, #001f3f);
+            color: #b3e0ff;
+        }
+        .bg-cyber {
+            background: #0d0f1a repeating-linear-gradient(45deg, #00ffff10 0px, #00ffff10 20px, #ff00ff10 20px, #ff00ff10 40px);
+            color: #ffb3ff;
+            text-shadow: 0 0 5px cyan;
+        }
+        .bg-pastel {
+            background: linear-gradient(135deg, #fbc2c2, #c2f0fc);
+            color: #4a4a4a;
+        }
+        .bg-dark {
+            background: #121212;
+            color: #e0e0e0;
+        }
+        .bg-light {
+            background: #f5f5f5;
+            color: #1e1e1e;
+        }
+        .bg-candy {
+            background: repeating-linear-gradient(45deg, #ffb6c1, #ffb6c1 20px, #ffe4e1 20px, #ffe4e1 40px);
+            color: #8b4513;
+        }
+        .bg-lavender {
+            background: linear-gradient(145deg, #e6e6fa, #d8bfd8);
+            color: #2d2d4a;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 15px; 
+            transition: background 0.6s ease, color 0.6s ease; 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: flex-start;
+            font-size: 16px; /* base for rem */
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 800px; /* wider for smart boards */
+            background: var(--glass); 
+            backdrop-filter: blur(25px); 
+            -webkit-backdrop-filter: blur(25px);
+            padding: 20px; 
+            border-radius: 32px; 
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn { 
+            from { 
+                opacity: 0; 
+                transform: translateY(10px); 
+            } 
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            } 
+        }
+
+        .hidden { 
+            display: none !important; 
+        }
+        
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            padding-bottom: 15px; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        input, select, button {
+            font-size: 1rem;
+            padding: 14px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.4);
+            color: white;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus { 
+            border-color: var(--primary); 
+            background: rgba(0,0,0,0.6); 
+        }
+
+        button { 
+            background: var(--primary); 
+            cursor: pointer; 
+            font-weight: 700; 
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+            min-width: 48px; /* touch target */
+            min-height: 48px;
+        }
+
+        button:active { 
+            transform: scale(0.96); 
+        }
+
+        button:disabled { 
+            opacity: 0.3; 
+            cursor: not-allowed; 
+        }
+
+        .big-btn { 
+            width: 100%; 
+            font-size: 1.3rem; 
+            background: var(--success); 
+            margin-bottom: 10px; 
+            padding: 18px; 
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+        }
+        
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .action-row input {
+            flex: 2;
+            min-width: 200px;
+        }
+        .action-row button {
+            flex: 1;
+            min-width: 80px;
+        }
+        
+        section { 
+            margin-bottom: 20px; 
+            padding: 20px; 
+            border-radius: 24px; 
+            background: rgba(255,255,255,0.06);
+        }
+
+        .shop-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
+            gap: 12px; 
+        }
+
+        .shop-grid button { 
+            padding: 14px 6px; 
+            font-size: 0.9rem; 
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            white-space: normal;
+            line-height: 1.2;
+        }
+
+        .msg { 
+            font-weight: 700; 
+            margin-top: 12px; 
+            text-align: center; 
+            min-height: 1.5em; 
+            font-size: 1rem; 
+        }
+
+        .badge { 
+            background: var(--secondary); 
+            padding: 5px 12px; 
+            border-radius: 10px; 
+            font-size: 0.75rem; 
+            font-weight: 900; 
+        }
+        
+        #deck-info { 
+            font-size: 0.8rem; 
+            opacity: 0.6; 
+            text-align: center; 
+            margin-top: 8px; 
+            letter-spacing: 0.5px; 
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+        }
+
+        td { 
+            padding: 12px 8px; 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+            font-size: 0.95rem;
+        }
+        
+        .voice-selector {
+            margin-bottom: 15px;
+        }
+        .voice-selector select {
+            width: 100%;
+            padding: 14px;
+        }
+
+        /* Larger screens (smart boards) */
+        @media (min-width: 768px) {
+            body { padding: 30px; }
+            .container { padding: 35px; }
+            button { padding: 16px 24px; }
+            .big-btn { font-size: 1.6rem; }
+            .shop-grid button { font-size: 1rem; }
         }
     </style>
 </head>
-<body data-theme="dark">
+<body class="bg-default" id="main-body">
 
-    <section id="login-page" class="view">
-        <div class="bg-pieces">
-            <i class="fa-solid fa-chess-knight p1"></i>
-            <i class="fa-solid fa-chess-rook p2"></i>
-            <i class="fa-solid fa-chess-bishop p3"></i>
-            <i class="fa-solid fa-chess-pawn p4"></i>
+    <div id="login-screen" class="container">
+        <h1 style="margin:0; font-size: clamp(2rem, 8vw, 2.8rem); text-align: center;">🎙️ Spelling Bee</h1>
+        <p style="opacity:0.7; margin-bottom: 30px; text-align: center; font-size: 1.1rem;">The ultimate arena for words.</p>
+        
+        <div style="display:flex; flex-direction:column; gap:15px;">
+            <input type="text" id="username-input" placeholder="Enter Username" autocomplete="off">
+            
+            <div id="password-area" class="hidden">
+                <p id="pw-label" style="font-size:0.9rem; margin: 5px 0; color:var(--secondary); font-weight:bold;"></p>
+                <input type="password" id="password-input" placeholder="Password">
+            </div>
+
+            <button id="login-btn" style="margin-top: 10px;">Join Match</button>
         </div>
-        <div class="login-box">
-            <h1 style="font-size: clamp(2.5rem, 8vw, 3rem); margin: 0 0 5px 0; font-weight: 800; letter-spacing: -1px;">Tour.<span style="color:var(--chess-green)">7B</span></h1>
-            <p data-i18n="loginSub" style="color: var(--text-sub); margin-bottom: 30px; font-size: 0.9rem;">Ready your opening move.</p>
-            <input type="text" id="login-user" class="input-field" data-i18n-ph="userPlaceholder" placeholder="Username">
-            <input type="password" id="login-pass" class="input-field" data-i18n-ph="passPlaceholder" placeholder="Password">
-            <button class="btn-main" style="width: 100%; margin-top: 20px; padding: 15px; font-size: 1.1rem;" id="doLogin">
-                <span data-i18n="enterArena">Enter Arena</span> <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </div>
-    </section>
-
-    <section id="dashboard-page" class="view hidden">
-        <header style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0 30px 0; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <i class="fa-solid fa-moon" id="theme-toggle" style="cursor:pointer; font-size: 1.3rem; color: var(--chess-green);"></i>
-                <select id="lang-selector" class="lang-select">
-                    <option value="en">🇬🇧 EN</option>
-                    <option value="de">🇩🇪 DE</option>
-                    <option value="fr">🇫🇷 FR</option>
-                    <option value="ar">🇸🇦 AR</option>
-                </select>
-                <button onclick="window.doLogout()" style="background:none; border:1px solid #444; color:var(--text-sub); cursor:pointer; padding: 6px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: bold;">LOGOUT</button>
-            </div>
-            <h2 style="font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; margin:0;">Tour.<span style="color:var(--chess-green)">7B</span></h2>
-            <div id="user-display" style="font-weight:bold; font-size: 0.85rem;">Connecting...</div>
-        </header>
-
-        <main class="dashboard-container" id="dashboard-container">
-            <!-- Riddle Card -->
-            <div class="dashboard-item" data-card-id="riddle">
-                <div class="card">
-                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
-                    <h3><i class="fa-solid fa-puzzle-piece" style="color:var(--chess-green)"></i> <span data-i18n="todayRiddle">Today's Riddle</span></h3>
-                    <div id="riddle-view">
-                        <img id="riddle-img" src="data:image/jpeg;base64,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" style="width:100%; border-radius:8px; display:none; margin-bottom: 15px;">
-                        <p id="riddle-text" style="color: var(--text-sub); line-height: 1.5;">Awaiting the first puzzle...</p>
-                    </div>
-                    <div class="role-admin hidden admin-section">
-                        <input type="text" id="edit-riddle-text" class="input-field" placeholder="Description">
-                        <input type="text" id="edit-riddle-url" class="input-field" placeholder="Image URL">
-                        <button class="btn-main" id="saveRiddle" style="width:100%; margin-top: 10px;">Update Riddle</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings Card -->
-            <div class="dashboard-item" data-card-id="settings">
-                <div class="card">
-                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
-                    <h3><i class="fa-solid fa-gear" style="color:var(--chess-green)"></i> <span data-i18n="settingsTitle">Settings</span></h3>
-                    <input type="password" id="change-pass-input" class="input-field" placeholder="New Password (6+ chars)">
-                    <button class="btn-main" id="doChangePass" style="width:100%; margin-top:10px;" data-i18n="updatePass">Update Password</button>
-                </div>
-            </div>
-
-            <!-- Support Ticket Card -->
-            <div class="dashboard-item role-not-owner hidden" data-card-id="support">
-                <div class="card">
-                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
-                    <h3><i class="fa-solid fa-paper-plane" style="color:var(--chess-green)"></i> Contact Owner</h3>
-                    <textarea id="support-input" class="input-field" placeholder="Send a ticket to the main account..." rows="3"></textarea>
-                    <button class="btn-main" id="sendSupport" style="width:100%" data-i18n="submitTicket">Send Ticket</button>
-                </div>
-            </div>
-
-            <!-- Leaderboard Card -->
-            <div class="dashboard-item" data-card-id="leaderboard">
-                <div class="card" style="min-height: 600px;">
-                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
-                    <h3><i class="fa-solid fa-trophy" style="color: gold;"></i> <span data-i18n="leaderboard">Leaderboard</span></h3>
-                    <div class="lb-tabs">
-                        <button class="lb-tab active" id="tab-chess" data-i18n="chess">Chess</button>
-                        <button class="lb-tab" id="tab-tricks" data-i18n="tricks">Tricks</button>
-                        <button class="lb-tab" id="tab-global" data-i18n="global">Global</button>
-                    </div>
-                    <div id="lb-display"></div>
-                    
-                    <div class="role-admin hidden admin-section">
-                        <h4>Point Override</h4>
-                        <input type="text" id="lb-name" class="input-field" placeholder="Exact Player Name">
-                        <div style="display:flex; gap:5px;">
-                            <input type="number" id="lb-chess" class="input-field" placeholder="Set Chess Pts">
-                            <input type="number" id="lb-trick" class="input-field" placeholder="Set Trick Pts">
-                        </div>
-                        <button class="btn-main" id="updateLB" style="width:100%; margin-top: 5px;">Force Save</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Owner Inbox Card -->
-            <div class="dashboard-item role-owner hidden" data-card-id="inbox">
-                <div class="card">
-                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
-                    <h3><i class="fa-solid fa-inbox" style="color:var(--chess-green)"></i> Owner Inbox</h3>
-                    <div id="inbox-container" style="max-height: 300px; overflow-y: auto; padding-right: 5px;"></div>
-                </div>
-            </div>
-
-            <!-- User Management Card -->
-            <div class="dashboard-item role-admin hidden" data-card-id="usermgmt">
-                <div class="card">
-                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
-                    <h3><i class="fa-solid fa-users-gear" style="color:var(--chess-green)"></i> <span data-i18n="userMgmt">User Management</span></h3>
-                    <p style="font-size:0.8rem; color:var(--text-sub); margin-top:6px;">Manage roles and request password resets.</p>
-                    <div id="admin-user-list" style="margin-top:12px; max-height: 300px; overflow-y:auto; padding-right:5px;"></div>
-                    
-                    <div class="admin-section" style="margin-top: 15px;">
-                        <h4>Create Account</h4>
-                        <input type="text" id="new-name" class="input-field" placeholder="New Username">
-                        <input type="password" id="new-pass" class="input-field" placeholder="Password">
-                        <button class="btn-main" id="createUser" style="width:100%; margin-top: 10px;">Register User</button>
-                    </div>
-                    
-                    <div class="admin-section" style="margin-top: 15px;">
-                        <h4>Link Account to Leaderboard</h3>
-                        <input type="text" id="link-user" class="input-field" placeholder="Auth Username">
-                        <input type="text" id="link-lb" class="input-field" placeholder="Leaderboard Name">
-                        <button class="btn-main" id="doLink" style="width:100%; margin-top: 10px;">Link Data</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Command Codes Card -->
-            <div class="dashboard-item role-admin hidden" data-card-id="codes">
-                <div class="card">
-                    <div class="card-drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
-                    <h3><i class="fa-solid fa-code" style="color:var(--chess-green)"></i> Command Codes</h3>
-                    <div id="codes-list" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;"></div>
-                    <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                        <input type="text" id="code-str" class="input-field" placeholder="Code (e.g. 1234)">
-                        <input type="number" id="code-pts" class="input-field" placeholder="Trick Points Amount">
-                        <input type="text" id="code-msg" class="input-field" placeholder="Custom Success Message">
-                        <button class="btn-main" id="createCode" style="width:100%; margin-top: 5px;">Create Code</button>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </section>
-
-    <div id="mc-message-popup" class="mc-message"></div>
-
-    <div id="mc-command-bar">
-        <span>/</span>
-        <input type="text" id="mc-input" placeholder="Enter command code...">
+        <p id="login-msg" class="msg" style="color: var(--danger);"></p>
     </div>
 
-    <div class="chat-fab" id="chatToggleBtn"><i class="fa-solid fa-comments"></i></div>
-    <div class="chat-window" id="chatWindow">
-        <div class="chat-header">
-            <span>Live Chat</span>
-            <button class="btn-main role-host-up hidden" id="sendEmphasis" style="background: #f39c12; padding: 6px 12px; font-size: 0.8rem;" title="5m Cooldown">
-                <i class="fa-solid fa-bullhorn"></i>
+    <div id="app-screen" class="container hidden">
+        <header>
+            <div>
+                <h2 id="welcome-text" style="margin:0; font-size: 1.4rem;">Welcome</h2>
+                <span class="badge" id="role-badge">STUDENT</span>
+            </div>
+            <div style="text-align:right">
+                <div style="font-size:2rem; font-weight:900; color:var(--success)" id="points-display">0</div>
+                <div style="font-size:0.7rem; opacity:0.7; letter-spacing: 1.5px;">TOTAL SCORE</div>
+            </div>
+        </header>
+
+        <section id="admin-panel" class="hidden" style="border-left: 5px solid var(--secondary)">
+            <h3 style="margin-top:0; color: var(--secondary); display: flex; align-items: center; gap: 8px;">
+                <span>🛠️ Admin Terminal</span>
+            </h3>
+            
+            <div style="display:flex; gap:10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <input type="text" id="new-word-input" placeholder="New Vocabulary Word" style="flex:2;">
+                <button id="add-word-btn" style="background:var(--secondary); flex:1;">Add</button>
+            </div>
+
+            <button id="toggle-word-list-btn" style="width:100%; background:rgba(255,255,255,0.1); font-size: 0.95rem; border: 1px solid rgba(255,255,255,0.2);">
+                👁️ Manage Database (Quiz Lock)
             </button>
-            <i class="fa-solid fa-xmark" style="cursor:pointer; font-size: 1.2rem; padding: 5px;" id="chatCloseBtn"></i>
-        </div>
-        <div class="chat-body" id="chat-container"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" class="input-field" placeholder="Say something..." style="margin:0;">
-            <button class="btn-main" id="sendChat" style="padding: 0 15px;"><i class="fa-solid fa-paper-plane"></i></button>
-        </div>
+
+            <div id="word-list-admin" class="hidden" style="margin-top: 20px; max-height: 250px; overflow-y: auto; padding-right: 5px;">
+            </div>
+            <hr style="margin:20px 0; opacity:0.2">
+
+            <h4 style="margin:0 0 10px 0;">👑 Admin Manager</h4>
+            <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                <input type="text" id="admin-target" placeholder="Username" style="flex: 2 1 120px;">
+                <input type="password" id="admin-password" placeholder="New Password" style="flex: 2 1 120px;">
+                <button id="make-admin-btn" style="background:var(--success); flex:1;">Make Admin</button>
+                <button id="remove-admin-btn" style="background:var(--danger); flex:1;">Remove Admin</button>
+            </div>
+            <p id="admin-msg" class="msg"></p>
+        </section>
+
+        <section id="quiz-area">
+            <!-- Voice selector -->
+            <div class="voice-selector">
+                <select id="voice-select">
+                    <option value="">Loading voices...</option>
+                </select>
+            </div>
+
+            <button id="play-word-btn" class="big-btn">🔊 Hear Word</button>
+            
+            <div class="action-row">
+                <input type="text" id="spell-input" placeholder="Spell it here..." autocomplete="off" autocapitalize="off" spellcheck="false">
+                <button id="submit-spell-btn">Check</button>
+            </div>
+            
+            <div class="action-row">
+                <button id="skip-word-btn" style="background:var(--warning);">⏭️ Skip (10 pts)</button>
+            </div>
+
+            <p id="game-msg" class="msg"></p>
+            <div id="deck-info">Loading words...</div>
+        </section>
+
+        <section style="padding: 15px;">
+            <h3 style="margin: 10px; font-size: 1.1rem; opacity: 0.8;">🏆 Hall of Fame</h3>
+            <table>
+                <tbody id="leaderboard-body"></tbody>
+            </table>
+            <p id="leaderboard-error" class="msg" style="color:var(--danger); font-size:0.9rem;"></p>
+        </section>
+
+        <section>
+            <h3 style="margin-top:0; font-size: 1.1rem; opacity: 0.8;">🛒 Themes & Skins</h3>
+            <div class="shop-grid" id="themes-grid">
+                <!-- Populated by JS with all themes -->
+            </div>
+        </section>
+
+        <button onclick="location.reload()" style="width:100%; margin-top:15px; background:transparent; color: var(--danger); font-size: 0.95rem; border: 1.5px solid var(--danger); font-weight: 800; padding: 16px;">LOGOUT SESSION</button>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy, getDoc, updateDoc, increment, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyClXt0-r-6bSpGEmzLLYpiAszGiW20GLkM",
-            projectId: "b-tournament",
-            storageBucket: "b-tournament.firebasestorage.app",
-            messagingSenderId: "785284063880",
-            appId: "1:785284063880:web:f078c8325b28926162f53d"
+            apiKey: "AIzaSyBtCy-YbS2LC_cF5LlWRHXqa7SD-Rn5E6k",
+            authDomain: "spelling-bee-f845d.firebaseapp.com",
+            projectId: "spelling-bee-f845d",
+            storageBucket: "spelling-bee-f845d.appspot.com",
+            messagingSenderId: "465817747027",
+            appId: "1:465817747027:web:931e7cc47636d0b77590a6"
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- LOGIN HANDLER ---
-document.getElementById('doLogin').onclick = async () => {
-    const u = document.getElementById('login-user').value.trim();
-    const p = document.getElementById('login-pass').value;
-    
-    console.log("Attempting login for:", `${u.toLowerCase()}@chess.tour`);
+        let currentUser = null;
+        let wordsList = []; // Master list
+        let wordDeck = [];  // Current pool (Smart Deck)
+        let currentWord = "";
+        let isAdmin = false;
+        let selectedVoiceURI = null; // Store preferred voice URI
+        let voices = [];
 
-    try { 
-        await signInWithEmailAndPassword(auth, `${u.toLowerCase()}@chess.tour`, p); 
-    } catch(e) { 
-        console.error("Firebase Error Code:", e.code); 
-        // If you see 'auth/invalid-credential', the user isn't in your Auth tab yet!
-        alert("Login Failed: Make sure this user is created in the Firebase Authentication tab.");
-    }
-};
+        // --- All available themes with costs and display names ---
+        const allThemes = [
+            { className: 'bg-default', name: 'Default', cost: 0 },
+            { className: 'bg-chess', name: 'Chess', cost: 20 },
+            { className: 'bg-roblox', name: 'Roblox', cost: 40 },
+            { className: 'bg-fortnite', name: 'Fortnite', cost: 60 },
+            { className: 'bg-galaxy', name: 'Galaxy', cost: 100 },
+            { className: 'bg-secret', name: 'Lilly Love Braids', cost: 0, secret: true },
+            { className: 'bg-midnight', name: 'Midnight', cost: 30 },
+            { className: 'bg-sunset', name: 'Sunset', cost: 30 },
+            { className: 'bg-forest', name: 'Forest', cost: 35 },
+            { className: 'bg-oceandeep', name: 'Ocean Deep', cost: 45 },
+            { className: 'bg-cyber', name: 'Neon Cyber', cost: 55 },
+            { className: 'bg-pastel', name: 'Pastel', cost: 25 },
+            { className: 'bg-dark', name: 'Dark Mode', cost: 15 },
+            { className: 'bg-light', name: 'Light Mode', cost: 15 },
+            { className: 'bg-candy', name: 'Candy Land', cost: 40 },
+            { className: 'bg-lavender', name: 'Lavender', cost: 30 }
+        ];
 
-        let currentUserData = null;
-        let lbRawData = [];
-        let currentLBMode = 'chess';
-        let listenersActive = false;
-        let draggedElement = null;
+        const loginScreen = document.getElementById('login-screen');
+        const appScreen = document.getElementById('app-screen');
+        const userIn = document.getElementById('username-input');
+        const passArea = document.getElementById('password-area');
+        const passIn = document.getElementById('password-input');
+        const pwLabel = document.getElementById('pw-label');
+        const voiceSelect = document.getElementById('voice-select');
 
-        let lbExpanded = false;
-
-        // Shared Firestore listener error handler to avoid uncaught errors
-        const handleFSListenerError = (error, ctx = 'Firestore') => {
-            console.warn(`${ctx} error:`, error && error.message ? error.message : error);
-            if (error && error.code === 'permission-denied') {
-                try { showMCMessage("Firestore: Missing permissions. Sign in with proper account."); } catch(e) {}
-            }
-            listenersActive = false;
-        };
-
-        // --- DRAG & DROP DASHBOARD ---
-        function initDragAndDrop() {
-            const container = document.getElementById('dashboard-container');
-            if (!container) return;
-
-            const items = container.querySelectorAll('.dashboard-item');
-            items.forEach(item => {
-                const handle = item.querySelector('.card-drag-handle');
-                if (!handle) return;
-
-                handle.addEventListener('dragstart', (e) => {
-                    draggedElement = item;
-                    item.classList.add('dragging');
-                    e.dataTransfer.effectAllowed = 'move';
-                });
-
-                handle.addEventListener('dragend', () => {
-                    if (draggedElement) draggedElement.classList.remove('dragging');
-                    saveDashboardOrder();
-                });
-
-                handle.draggable = true;
-            });
-
-            items.forEach(item => {
-                item.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    if (draggedElement && draggedElement !== item) {
-                        item.parentNode.insertBefore(draggedElement, item);
-                    }
-                });
-            });
-        }
-
-        function saveDashboardOrder() {
-            const order = Array.from(document.querySelectorAll('.dashboard-item')).map(item => item.dataset.cardId);
-            localStorage.setItem('dashboardOrder', JSON.stringify(order));
-        }
-
-        function loadDashboardOrder() {
-            const saved = localStorage.getItem('dashboardOrder');
-            if (!saved) return;
-            const order = JSON.parse(saved);
-            const container = document.getElementById('dashboard-container');
-            const current = Array.from(container.querySelectorAll('.dashboard-item')).map(el => ({ id: el.dataset.cardId, el }));
-            const sorted = order.map(id => current.find(c => c.id === id)).filter(c => c).map(c => c.el);
-            sorted.forEach(el => container.appendChild(el));
-        }
-
-        // --- HELPER: Setup all data listeners ---
-        const setupAllListeners = () => {
-            if (listenersActive) return; // Prevent duplicate listeners
-            listenersActive = true;
-            // If listener setup fails immediately, ensure we reset state via error handlers below.
-
-            onSnapshot(collection(db, "leaderboard"), (snap) => {
-                lbRawData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                if (typeof renderLB === 'function') renderLB();
-            }, (error) => handleFSListenerError(error, 'Leaderboard'));
-
-            onSnapshot(doc(db, "content", "riddle"), (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    const data = docSnapshot.data();
-                    const riddleText = document.getElementById('riddle-text');
-                    if (riddleText) riddleText.innerText = data.text || "No description provided.";
-                    const img = document.getElementById('riddle-img');
-                    if (img) {
-                        if (data.url) {
-                            img.src = data.url;
-                            img.style.display = 'block';
-                        } else {
-                            img.style.display = 'none';
-                        }
-                    }
-                    // Pre-fill edit fields
-                    const editText = document.getElementById('edit-riddle-text');
-                    const editUrl = document.getElementById('edit-riddle-url');
-                    if (editText) editText.value = data.text || '';
-                    if (editUrl) editUrl.value = data.url || '';
-                }
-            }, (error) => handleFSListenerError(error, 'Riddle'));
-
-            onSnapshot(query(collection(db, "chat"), orderBy("time", "asc")), (snap) => {
-                const c = document.getElementById('chat-container');
-                if (!c) return;
-                c.innerHTML = "";
-                snap.forEach(d => {
-                    const data = d.data();
-                    const isOwn = currentUserData && (currentUserData.username === data.author);
-                    const isStaffMsg = ['owner', 'admin', 'host'].includes(data.role);
-                    const canDelete = (currentUserData && ['owner', 'admin'].includes(currentUserData.role)) || (currentUserData && currentUserData.role === 'host' && isOwn);
-                    const msgClass = isStaffMsg ? 'chat-msg admin-msg' : 'chat-msg';
-                    const badge = isStaffMsg ? `<span class="role-badge badge-${data.role}">${data.role.toUpperCase()}</span>` : '';
-                    const emphasis = data.isEmphasis ? ' style="background: rgba(243, 156, 18, 0.2); border: 1px solid #f39c12; font-weight: bold;"' : '';
-                    c.innerHTML += `<div class="${msgClass}"${emphasis}><div class="author">${data.author} ${badge}</div><div>${data.text}</div>${canDelete ? `<i class="fa-solid fa-trash delete-msg-btn" onclick="window.deleteMsg('${d.id}')"></i>` : ''}</div>`;
-                });
-                c.scrollTop = c.scrollHeight;
-            }, (error) => handleFSListenerError(error, 'Chat'));
-
-            onSnapshot(collection(db, "players"), (snap) => {
-                const list = document.getElementById('admin-user-list');
-                if (!list) return;
-                list.innerHTML = '';
-                snap.docs.forEach(d => {
-                    const user = d.data();
-                    const username = user.username || d.id;
-                    const role = user.role || 'participant';
-                    const div = document.createElement('div');
-                    div.className = 'user-list-item';
-                    div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:0.9rem;"><b>${username}</b> <small>(${role})</small></span>
-                            <div style="display:flex; gap:5px;">
-                                <select onchange="window.changeRole('${d.id}', this.value)" style="background:#1a1a1a; border:1px solid #333; color:white; padding:4px; border-radius:4px; cursor:pointer; font-size:0.7rem;">
-                                    <option value="${role}">${role}</option>
-                                    <option value="participant">participant</option>
-                                    <option value="host">host</option>
-                                    <option value="admin">admin</option>
-                                </select>
-                                <button onclick="window.resetPass('${d.id}')" style="background:#d9534f; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">RESET</button>
-                                <button onclick="window.banUserDialog('${d.id}', '${username}')" style="background:#f39c12; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">BAN</button>
-                                <button onclick="window.deleteUserConfirm('${d.id}', '${username}')" style="background:#c9302c; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">DELETE</button>
-                            </div>
-                        </div>
-                    `;
-                    list.appendChild(div);
-                });
-            }, (error) => handleFSListenerError(error, 'UserMgmt'));
-
-            onSnapshot(query(collection(db, "messages"), orderBy("time", "desc")), (snap) => {
-                const container = document.getElementById('inbox-container');
-                if (!container) return;
-                container.innerHTML = snap.docs.map(d => `<div style="background:#1a1a1a; padding:10px; margin-bottom:5px; border-radius:8px; border-left:3px solid #9b59b6; display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div style="flex:1;"><b>${d.data().from}:</b> ${d.data().text}</div>
-                    <button onclick="window.delInbox('${d.id}')" style="color:#d9534f; background:none; border:none; cursor:pointer; font-weight:bold; margin-left:10px;">X</button>
-                </div>`).join('');
-            }, (error) => handleFSListenerError(error, 'Messages'));
-
-            onSnapshot(collection(db, "codes"), (snap) => {
-                const list = document.getElementById('codes-list');
-                if(!list) return;
-                list.innerHTML = '';
-                snap.docs.forEach(d => {
-                    const c = d.data();
-                    list.innerHTML += `<div style="font-size:0.8rem; border-bottom:1px solid #333; padding:5px; display:flex; justify-content:space-between; align-items:center;"><span>/${d.id} (+${c.points} pts)</span> <button onclick="window.delCode('${d.id}')" class="btn-danger" style="padding:2px 5px;">X</button></div>`;
-                });
-            }, (error) => handleFSListenerError(error, 'Codes'));
-        };
-
-        const initSecureListeners = () => {
-            try { setupAllListeners(); } catch (e) { handleFSListenerError(e, 'initSecureListeners'); }
-        };
-
-        // --- TRANSLATION DICTIONARY ---
-        const translations = {
-            en: {
-                loginSub: "Ready your opening move.", userPlaceholder: "Username", passPlaceholder: "Password", enterArena: "Enter Arena",
-                todayRiddle: "Today's Riddle", settingsTitle: "Settings", updatePass: "Update Password", contactAdmin: "Contact Admin",
-                submitTicket: "Submit Ticket", leaderboard: "Leaderboard", chess: "Chess", tricks: "Tricks", global: "Global",
-                adminInbox: "Admin Inbox (Tickets)", userMgmt: "User Management"
-            },
-            de: {
-                loginSub: "Bereiten Sie Ihren Eröffnungszug vor.", userPlaceholder: "Benutzername", passPlaceholder: "Passwort", enterArena: "Arena Betreten",
-                todayRiddle: "Heutiges Rätsel", settingsTitle: "Einstellungen", updatePass: "Passwort Aktualisieren", contactAdmin: "Admin Kontaktieren",
-                submitTicket: "Ticket Einreichen", leaderboard: "Classement", chess: "Schach", tricks: "Astuces", global: "Mondial",
-                adminInbox: "Boîte de réception Admin", userMgmt: "Gestion des Utilisateurs"
-            },
-            fr: {
-                loginSub: "Préparez votre coup d'ouverture.", userPlaceholder: "Nom d'utilisateur", passPlaceholder: "Mot de passe", enterArena: "Entrer dans l'Arène",
-                todayRiddle: "L'énigme d'aujourd'hui", settingsTitle: "Paramètres", updatePass: "Mettre à jour", contactAdmin: "Contacter l'Admin",
-                submitTicket: "Soumettre", leaderboard: "Classement", chess: "Échecs", tricks: "Astuces", global: "Mondial",
-                adminInbox: "Boîte de réception Admin", userMgmt: "Gestion des Utilisateurs"
-            }
-        };
-
-        let currentLang = 'en';
-
-        document.getElementById('lang-selector').addEventListener('change', (e) => {
-            if (e.target.value === 'ar') {
-                alert("Arabic translations coming soon! / الترجمة العربية قريباً!");
-                e.target.value = currentLang;
+        // --- Populate voice selector ---
+        function populateVoices() {
+            voices = window.speechSynthesis.getVoices();
+            voiceSelect.innerHTML = '';
+            if (voices.length === 0) {
+                voiceSelect.innerHTML = '<option value="">No voices available</option>';
                 return;
             }
-            currentLang = e.target.value;
-            applyTranslations();
-        });
-
-        function applyTranslations() {
-            const t = translations[currentLang];
-            document.querySelectorAll('[data-i18n]').forEach(el => { el.innerText = t[el.getAttribute('data-i18n')]; });
-            document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t[el.getAttribute('data-i18n-ph')]; });
+            voices.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.voiceURI;
+                opt.textContent = `${v.name} (${v.lang})`;
+                voiceSelect.appendChild(opt);
+            });
+            // Restore previously selected voice if exists
+            if (selectedVoiceURI) {
+                voiceSelect.value = selectedVoiceURI;
+            } else if (currentUser && currentUser.preferredVoice) {
+                voiceSelect.value = currentUser.preferredVoice;
+                selectedVoiceURI = currentUser.preferredVoice;
+            }
         }
+        window.speechSynthesis.onvoiceschanged = populateVoices;
+        // Initial call in case already loaded
+        if (window.speechSynthesis.getVoices().length) populateVoices();
 
-        window.navigateTo = (id) => {
-            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-            const el = document.getElementById(id);
-            if(el) el.classList.remove('hidden');
-        };
-
-        window.doLogout = async () => { 
-            localStorage.removeItem('isAdmin'); 
-            try { await signOut(auth); } catch(e) {}
-            window.location.reload(); 
-        };
-
-        window.changeRole = async (targetId, newRole) => {
-            if (!newRole || newRole === '') return;
-            try {
-                await updateDoc(doc(db, "players", targetId), { role: newRole });
-                console.log(`Role changed for ${targetId} to ${newRole}`);
-            } catch(e) {
-                console.error("Error changing role:", e);
-                alert("Failed to change role: " + e.message);
-            }
-        };
-
-        window.deleteUser = async (name) => {
-            if(confirm(`Are you sure?`)) {
-                await deleteDoc(doc(db, "players", name));
-                await deleteDoc(doc(db, "leaderboard", name));
-            }
-        };
-
-        window.quickAdd = async (name, amount) => {
-            await setDoc(doc(db, "leaderboard", name), { name: name, chess: increment(amount) }, { merge: true });
-        };
-
-        window.deleteMsg = async (msgId) => {
-            await deleteDoc(doc(db, "chat", msgId));
-        };
-
-        const toEmail = (n) => n.includes('@') ? n : `${n.toLowerCase().trim()}@chess.tour`;
-
-        const setBtnLoading = (id, loading) => {
-            const btn = document.getElementById(id);
-            if(!btn) return;
-            if(loading) {
-                btn.classList.add('btn-loading');
-                btn.dataset.original = btn.innerHTML;
-                btn.innerHTML = `<div class="spinner"></div>`;
-            } else {
-                btn.classList.remove('btn-loading');
-                btn.innerHTML = btn.dataset.original || btn.innerHTML;
-            }
-        };
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    const name = user.email.split('@')[0];
-                    const userDoc = await getDoc(doc(db, "players", name));
-                    
-                    if(name === 'admin') { 
-                        currentUserData = { username: 'MainAccount', role: 'owner', id: name };
-                    } else if(userDoc.exists()) {
-                        currentUserData = { ...userDoc.data(), id: name };
-                    } else {
-                        currentUserData = { username: name, role: 'participant', id: name };
-                    }
-
-                    // Listen to real-time updates for current user to refresh role changes
-                    onSnapshot(doc(db, "players", name), (docSnapshot) => {
-                        if (docSnapshot.exists()) {
-                            currentUserData = { ...docSnapshot.data(), id: name };
-                            updateRoleDisplay();
-                        }
-                    }, (err) => console.warn("Current user listener error:", err));
-
-                    const role = currentUserData.role;
-                    updateRoleDisplay();
-                    
-                    document.getElementById('dashboard-page').classList.remove('hidden');
-                    document.getElementById('login-page').classList.add('hidden');
-                    
-                    loadDashboardOrder();
-                    initDragAndDrop();
-                    initSecureListeners();
-                    startOwnerInbox();
-                    startUserManagement();
-                } catch(e) {
-                    console.error("Auth state error:", e);
-                    alert("Error loading user data. Please try logging in again.");
-                    try { await signOut(auth); } catch(err) {}
-                }
-            } else {
-                document.getElementById('login-page').classList.remove('hidden');
-                document.getElementById('dashboard-page').classList.add('hidden');
+        // Save voice preference when changed
+        voiceSelect.addEventListener('change', async () => {
+            selectedVoiceURI = voiceSelect.value;
+            if (currentUser) {
+                currentUser.preferredVoice = selectedVoiceURI;
+                await updateDoc(doc(db, "users", currentUser.id), { preferredVoice: selectedVoiceURI });
             }
         });
 
-        function updateRoleDisplay() {
-            if (!currentUserData) return;
-            const role = currentUserData.role;
-            document.querySelectorAll('.role-owner').forEach(el => el.classList.toggle('hidden', role !== 'owner'));
-            document.querySelectorAll('.role-not-owner').forEach(el => el.classList.toggle('hidden', role === 'owner'));
-            const isHostUp = ['owner', 'admin', 'host'].includes(role);
-            document.querySelectorAll('.role-host-up').forEach(el => el.classList.toggle('hidden', !isHostUp));
-            const isAdminUp = ['owner', 'admin'].includes(role);
-            document.querySelectorAll('.role-admin').forEach(el => el.classList.toggle('hidden', !isAdminUp));
-            document.getElementById('user-display').innerHTML = `<b>${currentUserData.username}</b> <span class="role-badge badge-${currentUserData.role}">${currentUserData.role}</span>`;
+        // --- Speak function using selected voice ---
+        function speakWord(word) {
+            if (!word) return;
+            const utter = new SpeechSynthesisUtterance(word);
+            utter.rate = 0.8;
+            if (selectedVoiceURI) {
+                const voice = voices.find(v => v.voiceURI === selectedVoiceURI);
+                if (voice) utter.voice = voice;
+            }
+            window.speechSynthesis.speak(utter);
         }
 
-        document.getElementById('doLogin').onclick = async () => {
-            const user = document.getElementById('login-user').value.trim();
-            const pass = document.getElementById('login-pass').value;
-            if(!user || !pass) return alert("Please enter username and password");
-            setBtnLoading('doLogin', true);
-            
-            try {
-                if(user.toLowerCase() === "admin" && pass === "0508") {
-                    localStorage.setItem('isAdmin', 'true');
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    location.reload();
-                } else {
-                    const email = toEmail(user);
-                    console.log("Attempting login with email:", email); // Debug log
-                    await signInWithEmailAndPassword(auth, email, pass);
-                }
-            } catch(e) {
-                console.error("Login error:", e);
-                let errorMsg = "Login failed";
-                
-                if (e.code === 'auth/user-not-found') {
-                    errorMsg = "User not found. Ask an admin to create your account.";
-                } else if (e.code === 'auth/wrong-password') {
-                    errorMsg = "Wrong password";
-                } else if (e.code === 'auth/invalid-credential') {
-                    errorMsg = "Invalid username or password. User may not exist yet.";
-                } else if (e.code === 'auth/invalid-email') {
-                    errorMsg = "Invalid email format";
-                } else if (e.code === 'auth/user-disabled') {
-                    errorMsg = "User account disabled";
-                } else if (e.code === 'auth/too-many-requests') {
-                    errorMsg = "Too many login attempts. Try again later.";
-                } else {
-                    errorMsg = e.message || "Authentication error";
-                }
-                
-                alert(errorMsg);
-                setBtnLoading('doLogin', false);
-            }
-        };
+        // Debounce timer for username check
+        let usernameCheckTimeout;
 
-        const toggleChat = () => document.getElementById('chatWindow').classList.toggle('open');
-        document.getElementById('chatToggleBtn').onclick = toggleChat;
-        document.getElementById('chatCloseBtn').onclick = () => document.getElementById('chatWindow').classList.remove('open');
-
-        document.getElementById('sendChat').onclick = async () => {
-            const val = document.getElementById('chat-input').value.trim();
-            if(!val || !currentUserData) return;
+        userIn.addEventListener('input', () => {
+            clearTimeout(usernameCheckTimeout);
+            const val = userIn.value.trim().toLowerCase();
             
-            const isBanned = await checkChatBan();
-            if (isBanned) {
-                alert("You are banned from chat.");
-                document.getElementById('chat-input').value = "";
+            if (val === "") {
+                passArea.classList.add('hidden');
                 return;
             }
-            
-            try {
-                await addDoc(collection(db, "chat"), { text: val, time: new Date(), author: currentUserData.username, role: currentUserData.role });
-                document.getElementById('chat-input').value = "";
-            } catch(e) { 
-                alert("Error sending message");
-            }
-        };
 
-        // --- BAN CHECK FOR CHAT ---
-        async function checkChatBan() {
-            if (!currentUserData) return false;
-            
-            try {
-                const playerDoc = await getDoc(doc(db, "players", currentUserData.id));
-                if (playerDoc.exists()) {
-                    const playerData = playerDoc.data();
-                    
-                    // Check if chat banned
-                    if (playerData && playerData.chatBanned === true) {
-                        const now = new Date();
-                        
-                        // Permanent ban (no expiry)
-                        if (!playerData.chatBanUntil) {
-                            return true;
-                        }
-                        
-                        // Temporary ban - check if expired
-                        const banUntilTime = new Date(playerData.chatBanUntil).getTime();
-                        if (now.getTime() < banUntilTime) {
-                            return true; // Still banned
-                        } else {
-                            // Ban expired, remove it
-                            await updateDoc(doc(db, "players", currentUserData.id), { 
-                                chatBanned: false,
-                                chatBanUntil: null
-                            });
-                            return false;
-                        }
-                    }
+            if (val === "abdullah") {
+                passArea.classList.remove('hidden');
+                pwLabel.innerText = "Admin Login:";
+                return;
+            }
+
+            usernameCheckTimeout = setTimeout(async () => {
+                const userRef = doc(db, "users", val);
+                const userSnap = await getDoc(userRef);
+                
+                if (userSnap.exists() && userSnap.data().password) {
+                    passArea.classList.remove('hidden');
+                    pwLabel.innerText = `Password for ${val}:`;
+                } else {
+                    passArea.classList.add('hidden');
                 }
-            } catch(e) {
-                console.warn("Chat ban check error:", e);
-            }
-            return false;
-        };
-
-        const renderLB = () => {
-            const container = document.getElementById('lb-display');
-            container.innerHTML = "";
-            let sorted = lbRawData.map(p => ({
-                ...p, val: currentLBMode === 'chess' ? (p.chess || 0) : currentLBMode === 'tricks' ? (p.tricks || 0) : ((p.chess || 0) + (p.tricks || 0) - 200)
-            })).sort((a,b) => b.val - a.val);
-
-            const isAdmin = currentUserData && currentUserData.role === 'admin';
-
-            sorted.forEach((p, i) => {
-                const isYou = currentUserData && currentUserData.linkedLeaderboard === p.name;
-                const medal = i === 0 ? '🥇 ' : i === 1 ? '🥈 ' : i === 2 ? '🥉 ' : `<span style="color:var(--text-sub); width:20px; display:inline-block;">${i+1}.</span> `;
-                const controls = (isAdmin && currentLBMode === 'chess') ? `<span style="margin-left:10px; display:inline-flex; gap:3px;"><button class="inline-inc-btn" onclick="window.quickAdd('${p.name}', 5)">+5</button></span>` : '';
-                const youBadge = isYou ? `<span style="color:var(--chess-green-bright); font-weight:bold; margin-left:5px; font-size:0.8rem;">((you!))</span>` : '';
-                const isHidden = i >= 3 && !lbExpanded;
-                const hiddenClass = isHidden ? 'hidden-lb-item' : '';
-
-                container.innerHTML += `
-                    <div class="item-row ${isYou ? 'is-you' : ''} ${hiddenClass}" style="animation-delay:${i*0.05}s">
-                        <div style="display:flex; align-items:center;">${medal} <b style="margin-left:5px;">${p.name}</b> ${youBadge} ${controls}</div>
-                        <b style="font-size:1.1rem; color:var(--chess-green-bright);">${p.val}</b>
-                    </div>`;
-            });
-
-            // Add toggle button after rendering
-            const existingBtn = container.nextElementSibling;
-            if (existingBtn && existingBtn.classList.contains('lb-toggle-btn')) {
-                existingBtn.remove();
-            }
-
-            const toggleBtn = document.createElement('button');
-            toggleBtn.className = 'btn-main lb-toggle-btn';
-            toggleBtn.style.width = '100%';
-            toggleBtn.style.marginTop = '10px';
-            toggleBtn.innerText = lbExpanded ? '▲ Hide Leaderboard' : '▼ Show All Rankings';
-            toggleBtn.onclick = () => {
-                lbExpanded = !lbExpanded;
-                renderLB();
-            };
-            container.parentNode.insertBefore(toggleBtn, container.nextSibling);
-        };
-
-        ['chess', 'tricks', 'global'].forEach(mode => {
-            document.getElementById(`tab-${mode}`).onclick = (e) => {
-                currentLBMode = mode;
-                document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
-                e.target.classList.add('active'); renderLB();
-            };
+            }, 500);
         });
 
-        document.getElementById('updateLB').onclick = async () => {
-            const n = document.getElementById('lb-name').value;
-            const c = parseInt(document.getElementById('lb-chess').value) || 0;
-            const t = parseInt(document.getElementById('lb-trick').value) || 0;
-            if(n) await setDoc(doc(db, "leaderboard", n), { name: n, chess: c, tricks: t }, {merge: true});
-        };
-
-        document.getElementById('saveRiddle').onclick = async () => {
-            const text = document.getElementById('edit-riddle-text').value.trim();
-            const url = document.getElementById('edit-riddle-url').value.trim();
-            if (!text && !url) return alert("Enter at least description or image URL");
-            setBtnLoading('saveRiddle', true);
-            try {
-                await setDoc(doc(db, "content", "riddle"), { text, url }, { merge: true });
-                alert("Riddle updated!");
-            } catch(e) {
-                console.error("Error saving riddle:", e);
-                alert("Failed to update riddle");
-            }
-            setBtnLoading('saveRiddle', false);
-        };
-
-        document.getElementById('createUser').onclick = async () => {
-            const name = document.getElementById('new-name').value;
-            const pass = document.getElementById('new-pass').value;
-            if(!name || pass.length < 6) return alert("Min 6 chars");
-            setBtnLoading('createUser', true);
-            try {
-                await createUserWithEmailAndPassword(auth, toEmail(name), pass);
-                await setDoc(doc(db, "players", name), { username: name, role: 'participant' });
-                alert("Created!");
-                document.getElementById('new-name').value = '';
-                document.getElementById('new-pass').value = '';
-            } catch(e) { alert(e.message); }
-            setBtnLoading('createUser', false);
-        };
-
-        document.getElementById('doLink').onclick = async () => {
-            const authUser = document.getElementById('link-user').value.trim();
-            const lbUser = document.getElementById('link-lb').value.trim();
-            if(!authUser || !lbUser) return alert("Fill both fields");
-            await updateDoc(doc(db, "players", authUser), { linkedLeaderboard: lbUser });
-            alert(`Linked ${authUser} to ${lbUser}`);
-            document.getElementById('link-user').value = '';
-            document.getElementById('link-lb').value = '';
-        };
-
-        // --- OWNER INBOX LISTENER ---
-        let ownerInboxActive = false;
-        function startOwnerInbox() {
-            if (!currentUserData || currentUserData.role !== 'owner') return;
-            if (ownerInboxActive) return;
-            ownerInboxActive = true;
-
-            onSnapshot(query(collection(db, "messages"), orderBy("time", "desc")), (snap) => {
-                const container = document.getElementById('inbox-container');
-                if (!container) return;
-                container.innerHTML = snap.docs.map(d => `<div style="background:#1a1a1a; padding:10px; margin-bottom:5px; border-radius:8px; border-left:3px solid #9b59b6; display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div style="flex:1;"><b>${d.data().from}:</b> ${d.data().text}</div>
-                    <button onclick="window.delInbox('${d.id}')" style="color:#d9534f; background:none; border:none; cursor:pointer; font-weight:bold; margin-left:10px;">X</button>
-                </div>`).join('');
-            }, (err) => handleFSListenerError(err, 'OwnerInbox'));
-        }
-
-        window.delInbox = async (msgId) => {
-            if(confirm('Delete this message?')) await deleteDoc(doc(db, "messages", msgId));
-        };
-
-        // --- ADMIN/OWNER: USER MANAGEMENT ---
-        let userMgmtActive = false;
-        function startUserManagement() {
-            if (!currentUserData || !['owner', 'admin'].includes(currentUserData.role)) return;
-            if (userMgmtActive) return;
-            userMgmtActive = true;
-
-            onSnapshot(collection(db, "players"), (snap) => {
-                const list = document.getElementById('admin-user-list');
-                if (!list) return;
-                list.innerHTML = '';
-                snap.docs.forEach(d => {
-                    const user = d.data();
-                    const username = user.username || d.id;
-                    const role = user.role || 'participant';
-                    const div = document.createElement('div');
-                    div.className = 'user-list-item';
-                    div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:0.9rem;"><b>${username}</b> <small>(${role})</small></span>
-                            <div style="display:flex; gap:5px; flex-wrap: wrap;">
-                                <select onchange="window.changeRole('${d.id}', this.value)" style="background:#1a1a1a; border:1px solid #333; color:white; padding:4px; border-radius:4px; cursor:pointer; font-size:0.7rem;">
-                                    <option value="${role}">${role}</option>
-                                    <option value="participant">participant</option>
-                                    <option value="host">host</option>
-                                    <option value="admin">admin</option>
-                                </select>
-                                <button onclick="window.resetPass('${d.id}')" style="background:#d9534f; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">RESET</button>
-                                <button onclick="window.banUserDialog('${d.id}', '${username}')" style="background:#f39c12; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">BAN</button>
-                                <button onclick="window.deleteUserConfirm('${d.id}', '${username}')" style="background:#c9302c; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.7rem;">DELETE</button>
-                            </div>
-                        </div>
-                    `;
-                    list.appendChild(div);
-                });
-            }, (err) => handleFSListenerError(err, 'UserMgmt'));
-        }
-
-        // --- ADMIN/OWNER: Change Roles & Password Flag ---
-        window.changeRole = async (targetId, newRole) => {
-            try {
-                await updateDoc(doc(db, "players", targetId), { role: newRole });
-            } catch(e) {
-                alert("Failed to change role: " + e.message);
-            }
-        };
-
-        window.resetPass = async (targetId) => {
-            if (confirm(`Force reset for ${targetId}?`)) {
-                await setDoc(doc(db, "password_resets", targetId), { 
-                    target: targetId, newPass: "123456", time: new Date() 
-                });
-                alert("Reset flag set to 123456.");
-            }
-        };
-
-        window.deleteUserConfirm = async (targetId, username) => {
-            if (confirm(`🚨 PERMANENTLY DELETE ${username}? This cannot be undone!`)) {
-                if (confirm(`Are you absolutely sure? Type "DELETE" to confirm.`) && confirm("Final confirmation - user will be deleted")) {
-                    try {
-                        await deleteDoc(doc(db, "players", targetId));
-                        await deleteDoc(doc(db, "leaderboard", targetId));
-                        alert(`User ${username} has been deleted.`);
-                    } catch(e) {
-                        alert("Error deleting user: " + e.message);
-                    }
-                }
-            }
-        };
-
-        window.banUserDialog = async (targetId, username) => {
-            const hours = prompt(`Ban ${username} from chat for how many hours? (0 = permanent)`, "24");
-            if (hours === null) return;
+        // Login Logic
+        document.getElementById('login-btn').addEventListener('click', async () => {
+            const username = userIn.value.trim().toLowerCase();
             
-            const banHours = parseInt(hours);
-            if (isNaN(banHours) || banHours < 0) return alert("Invalid number");
-            
-            try {
-                const banData = {
-                    chatBanned: true,
-                    chatBannedAt: new Date(),
-                    chatBanDurationHours: banHours,
-                    chatBanReason: "Admin ban"
-                };
-                if (banHours > 0) {
-                    banData.chatBanUntil = new Date(Date.now() + banHours * 60 * 60 * 1000);
+            if (!username) {
+                document.getElementById('login-msg').innerText = "Enter a username.";
+                return;
+            }
+
+            const userRef = doc(db, "users", username);
+            const userSnap = await getDoc(userRef);
+
+            if (username === "abdullah") {
+                const pw = passIn.value.trim();
+                if (!pw) {
+                    document.getElementById('login-msg').innerText = "Password required.";
+                    return;
                 }
                 
-                await updateDoc(doc(db, "players", targetId), banData);
-                alert(`${username} chat banned for ${banHours === 0 ? 'permanently' : banHours + ' hours'}.`);
-            } catch(e) {
-                console.error("Ban error:", e);
-                alert("Error banning user: " + e.message);
-            }
-        };
-
-        // --- COMMAND BAR LOGIC ---
-        window.addEventListener('keydown', (e) => {
-            // Open bar if '/' is pressed and dashboard is visible
-            if (e.key === '/' && !document.getElementById('dashboard-page').classList.contains('hidden')) {
-                if(document.activeElement.id !== 'chat-input' && document.activeElement.id !== 'mc-input') {
-                    e.preventDefault();
-                    document.getElementById('mc-command-bar').style.display = 'flex';
-                    document.getElementById('mc-input').focus();
-                    document.getElementById('mc-input').value = '';
+                if (userSnap.exists() && userSnap.data().password) {
+                    if (userSnap.data().password !== pw) {
+                        document.getElementById('login-msg').innerText = "Access Denied: Wrong Password";
+                        return;
+                    }
+                    currentUser = { id: username, ...userSnap.data() };
+                } else {
+                    currentUser = { id: username, points: 0, unlockedThemes: ["bg-default"], password: pw, isAdmin: true };
+                    await setDoc(userRef, currentUser);
                 }
-            }
-            if (e.key === 'Escape') document.getElementById('mc-command-bar').style.display = 'none';
-        });
-
-        document.getElementById('mc-input').addEventListener('keydown', async (e) => {
-            if (e.key === 'Enter') {
-                const val = e.target.value.trim().toLowerCase();
-                document.getElementById('mc-command-bar').style.display = 'none';
-                processCommand(val);
-            }
-        });
-
-        async function processCommand(code) {
-            if(!currentUserData) return showMCMessage("Not logged in!");
-            
-            const codeDoc = await getDoc(doc(db, "codes", code));
-            if (!codeDoc.exists()) return showMCMessage("Unknown Command.");
-
-            const data = codeDoc.data();
-            const usageId = `${currentUserData.id}_${code}`;
-            const usedCheck = await getDoc(doc(db, "used_codes", usageId));
-            
-            if (usedCheck.exists()) return showMCMessage("Command already used by this account!");
-
-            const lbName = currentUserData.linkedLeaderboard || currentUserData.username;
-            const lbEntry = lbRawData.find(p => p.name.toLowerCase() === lbName.toLowerCase());
-
-            if (lbEntry) {
-                await updateDoc(doc(db, "leaderboard", lbEntry.id), { tricks: increment(data.points) });
-                await setDoc(doc(db, "used_codes", usageId), { used: true, time: new Date() });
-                showMCMessage(data.message || `Code accepted! +${data.points} Trick Points.`);
+                isAdmin = true;
             } else {
-                showMCMessage("Error: Account not linked to Leaderboard.");
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    if (userData.password) {
+                        const pw = passIn.value.trim();
+                        if (!pw) {
+                            document.getElementById('login-msg').innerText = "Password required.";
+                            return;
+                        }
+                        if (userData.password !== pw) {
+                            document.getElementById('login-msg').innerText = "Incorrect password.";
+                            return;
+                        }
+                    }
+                    currentUser = { id: username, ...userData };
+                } else {
+                    currentUser = { id: username, points: 0, unlockedThemes: ["bg-default"], isAdmin: false };
+                    await setDoc(userRef, currentUser);
+                }
+                isAdmin = currentUser.isAdmin || false;
+            }
+
+            // Ensure unlockedThemes is an array
+            if (!currentUser.unlockedThemes) currentUser.unlockedThemes = ["bg-default"];
+
+            // Secret theme for special users
+            if (["marina", "layla"].includes(username) && !currentUser.unlockedThemes.includes("bg-secret")) {
+                currentUser.unlockedThemes.push("bg-secret");
+                await updateDoc(userRef, { unlockedThemes: currentUser.unlockedThemes });
+            }
+
+            // Set preferred voice if exists
+            if (currentUser.preferredVoice) {
+                selectedVoiceURI = currentUser.preferredVoice;
+                if (voiceSelect) voiceSelect.value = selectedVoiceURI;
+            }
+
+            setupApp();
+        });
+
+        function setupApp() {
+            loginScreen.classList.add('hidden');
+            appScreen.classList.remove('hidden');
+            
+            document.getElementById('welcome-text').innerText = "Hello, " + currentUser.id.charAt(0).toUpperCase() + currentUser.id.slice(1);
+            document.getElementById('points-display').innerText = currentUser.points || 0;
+            
+            if (isAdmin) {
+                document.getElementById('admin-panel').classList.remove('hidden');
+                document.getElementById('role-badge').innerText = "MASTER ADMIN";
+                refreshAdminWords();
+            } else {
+                document.getElementById('admin-panel').classList.add('hidden');
+                document.getElementById('role-badge').innerText = "STUDENT";
+            }
+
+            // Populate shop grid
+            renderShop();
+
+            fetchWords();
+            setupLeaderboard();
+        }
+
+        function renderShop() {
+            const grid = document.getElementById('themes-grid');
+            grid.innerHTML = '';
+            allThemes.forEach(theme => {
+                // Skip secret theme if not unlocked and not special
+                if (theme.secret && !currentUser.unlockedThemes.includes(theme.className)) return;
+                
+                const btn = document.createElement('button');
+                btn.className = 'buy-btn';
+                btn.dataset.theme = theme.className;
+                btn.dataset.cost = theme.cost;
+                btn.textContent = `${theme.name} (${theme.cost})`;
+                if (currentUser.unlockedThemes.includes(theme.className)) {
+                    btn.style.background = 'var(--success)';
+                }
+                btn.addEventListener('click', async (e) => {
+                    const t = e.target.dataset.theme;
+                    const cost = parseInt(e.target.dataset.cost);
+                    
+                    if (currentUser.unlockedThemes.includes(t)) {
+                        document.getElementById('main-body').className = t;
+                    } else if (currentUser.points >= cost) {
+                        currentUser.points -= cost;
+                        currentUser.unlockedThemes.push(t);
+                        
+                        document.getElementById('points-display').innerText = currentUser.points;
+                        document.getElementById('main-body').className = t;
+                        
+                        await updateDoc(doc(db, "users", currentUser.id), { 
+                            points: currentUser.points, 
+                            unlockedThemes: currentUser.unlockedThemes 
+                        });
+                        renderShop(); // refresh button colors
+                    } else { 
+                        alert("Victory requires more points! Keep spelling."); 
+                    }
+                });
+                grid.appendChild(btn);
+            });
+        }
+
+        async function fetchWords() {
+            const snapshot = await getDocs(collection(db, "words"));
+            wordsList = snapshot.docs.map(doc => doc.data().word);
+            wordDeck = [...wordsList]; 
+            updateDeckInfo();
+        }
+
+        function updateDeckInfo() {
+            const info = document.getElementById('deck-info');
+            if (wordsList.length === 0) {
+                info.innerText = "No words in arena database.";
+            } else {
+                info.innerText = `${wordDeck.length} words remaining in current cycle`;
             }
         }
 
-        function showMCMessage(text) {
-            const p = document.getElementById('mc-message-popup');
-            p.innerText = text;
-            p.style.display = 'block';
-            setTimeout(() => { p.style.display = 'none'; }, 4000);
+        // --- SMART DECK LOGIC: REPEAT UNTIL CORRECT ---
+        document.getElementById('play-word-btn').addEventListener('click', () => {
+            if (!wordsList.length) { 
+                document.getElementById('game-msg').innerText = "Database is empty!"; 
+                return; 
+            }
+            
+            // If no current word, pick one
+            if (!currentWord) {
+                if (wordDeck.length === 0) {
+                    wordDeck = [...wordsList]; // Refill deck
+                    document.getElementById('game-msg').innerText = "♻️ Word pool reshuffled!";
+                    document.getElementById('game-msg').style.color = "var(--secondary)";
+                }
+                const randomIndex = Math.floor(Math.random() * wordDeck.length);
+                currentWord = wordDeck.splice(randomIndex, 1)[0];
+            }
+            
+            speakWord(currentWord);
+            
+            if (!document.getElementById('game-msg').innerText.includes("♻️")) {
+                document.getElementById('game-msg').innerText = "Listening...";
+                document.getElementById('game-msg').style.color = "white";
+            }
+            
+            updateDeckInfo();
+        });
+
+        document.getElementById('submit-spell-btn').addEventListener('click', async () => {
+            const input = document.getElementById('spell-input');
+            const attempt = input.value.trim().toLowerCase();
+            const msg = document.getElementById('game-msg');
+
+            if (!currentWord) {
+                msg.innerText = "Hear a word first!";
+                return;
+            }
+
+            if (attempt === currentWord) {
+                // Correct!
+                currentUser.points = (currentUser.points || 0) + 10;
+                document.getElementById('points-display').innerText = currentUser.points;
+                
+                msg.innerText = "🔥 Correct! +10 Points";
+                msg.style.color = "var(--success)";
+                
+                await updateDoc(doc(db, "users", currentUser.id), { points: currentUser.points });
+                
+                input.value = "";
+                currentWord = ""; // Clear so next hear picks new word
+            } else {
+                msg.innerText = "❌ Incorrect. Try hearing it again!";
+                msg.style.color = "var(--danger)";
+                // Word remains, so they can press Hear again
+            }
+        });
+
+        // --- Skip button: costs 10 points, removes current word from deck and picks new ---
+        document.getElementById('skip-word-btn').addEventListener('click', async () => {
+            if (!currentWord) {
+                document.getElementById('game-msg').innerText = "No word to skip.";
+                return;
+            }
+            if (currentUser.points < 10) {
+                document.getElementById('game-msg').innerText = "Not enough points (need 10).";
+                return;
+            }
+
+            // Deduct points
+            currentUser.points -= 10;
+            document.getElementById('points-display').innerText = currentUser.points;
+            await updateDoc(doc(db, "users", currentUser.id), { points: currentUser.points });
+
+            // Current word is already removed from deck when it was drawn, so we don't need to remove again.
+            // But we need to reset currentWord so next hear picks new.
+            currentWord = "";
+            
+            document.getElementById('game-msg').innerText = "⏩ Skipped! -10 points";
+            document.getElementById('game-msg').style.color = "var(--warning)";
+            document.getElementById('spell-input').value = "";
+            
+            // Optionally, if deck empty, refill? The next hear will handle.
+        });
+
+        // --- ADMIN STUFF ---
+        document.getElementById('toggle-word-list-btn').addEventListener('click', () => {
+            const list = document.getElementById('word-list-admin');
+            const quiz = document.getElementById('quiz-area');
+            const btn = document.getElementById('toggle-word-list-btn');
+
+            if (list.classList.contains('hidden')) {
+                list.classList.remove('hidden');
+                quiz.style.opacity = "0.2";
+                quiz.querySelectorAll('button, input, select').forEach(el => el.disabled = true);
+                btn.innerText = "🙈 Hide Data (Unlock Quiz)";
+                refreshAdminWords();
+            } else {
+                list.classList.add('hidden');
+                quiz.style.opacity = "1";
+                quiz.querySelectorAll('button, input, select').forEach(el => el.disabled = false);
+                btn.innerText = "👁️ Manage Database (Quiz Lock)";
+            }
+        });
+
+        async function refreshAdminWords() {
+            const snap = await getDocs(collection(db, "words"));
+            const div = document.getElementById('word-list-admin');
+            div.innerHTML = "";
+            
+            snap.forEach(d => {
+                const item = document.createElement('div');
+                item.style = "display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,0.3); border-radius:12px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.05);";
+                item.innerHTML = `<span>${d.data().word}</span><button style="padding:6px 12px; font-size:0.7rem; background:var(--danger)" onclick="deleteWord('${d.id}')">Delete</button>`;
+                div.appendChild(item);
+            });
         }
 
-        // --- ADMIN CODE MANAGEMENT ---
-        document.getElementById('createCode').onclick = async () => {
-            const str = document.getElementById('code-str').value.trim().toLowerCase();
-            const pts = parseInt(document.getElementById('code-pts').value);
-            const msg = document.getElementById('code-msg').value;
-            if(!str || isNaN(pts)) return alert("Fill code and points");
-            setBtnLoading('createCode', true);
-            try {
-                await setDoc(doc(db, "codes", str), { points: pts, message: msg });
-                document.getElementById('code-str').value = '';
-                document.getElementById('code-pts').value = '';
-                document.getElementById('code-msg').value = '';
-                alert("Code Created!");
-            } catch(e) { alert(e.message); }
-            setBtnLoading('createCode', false);
+        window.deleteWord = async (id) => {
+            if(confirm("Permanently delete this word?")) {
+                await deleteDoc(doc(db, "words", id));
+                refreshAdminWords();
+                fetchWords();
+            }
         };
 
-        window.delCode = async (id) => {
-            if(confirm('Delete this code?')) await deleteDoc(doc(db, "codes", id));
-        };
+        document.getElementById('add-word-btn').addEventListener('click', async () => {
+            const val = document.getElementById('new-word-input').value.trim().toLowerCase();
+            
+            if (val) {
+                await addDoc(collection(db, "words"), { word: val });
+                document.getElementById('new-word-input').value = "";
+                refreshAdminWords();
+                fetchWords();
+            }
+        });
+
+        // --- LEADERBOARD ---
+        function setupLeaderboard() {
+            const q = query(collection(db, "users"), orderBy("points", "desc"), limit(5));
+            onSnapshot(q, (snap) => {
+                const body = document.getElementById('leaderboard-body');
+                body.innerHTML = "";
+                
+                snap.forEach(u => {
+                    const data = u.data();
+                    body.innerHTML += `<tr><td>${u.id}${data.isAdmin ? ' ⭐' : ''}</td><td style="text-align:right; font-weight:900;">${data.points || 0}</td></tr>`;
+                });
+            });
+        }
+
+        // --- ADMIN ROLE CONTROL ---
+        document.getElementById("make-admin-btn").addEventListener("click", async () => {
+            const username = document.getElementById("admin-target").value.trim().toLowerCase();
+            const password = document.getElementById("admin-password").value.trim();
+            const msg = document.getElementById("admin-msg");
+            if(!username) {
+                msg.innerText = "Enter a username.";
+                return;
+            }
+            if(!password) {
+                msg.innerText = "Password required for admin.";
+                return;
+            }
+            try{
+                const userRef = doc(db, "users", username);
+                const userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                    await updateDoc(userRef, { isAdmin: true, password: password });
+                } else {
+                    await setDoc(userRef, { 
+                        points: 0, 
+                        unlockedThemes: ["bg-default"], 
+                        isAdmin: true, 
+                        password: password 
+                    });
+                }
+                msg.innerText = username + " is now an Admin (password set).";
+                msg.style.color = "var(--success)";
+                document.getElementById("admin-password").value = "";
+            } catch(e){
+                msg.innerText = "Error: " + e.message;
+                msg.style.color = "var(--danger)";
+            }
+        });
+
+        document.getElementById("remove-admin-btn").addEventListener("click", async () => {
+            const username = document.getElementById("admin-target").value.trim().toLowerCase();
+            const msg = document.getElementById("admin-msg");
+            if(!username) {
+                msg.innerText = "Enter a username.";
+                return;
+            }
+            try{
+                await updateDoc(doc(db, "users", username), { isAdmin: false });
+                msg.innerText = username + " is no longer an Admin.";
+                msg.style.color = "var(--danger)";
+            } catch(e){
+                msg.innerText = "User not found.";
+                msg.style.color = "var(--danger)";
+            }
+        });
     </script>
 </body>
 </html>
